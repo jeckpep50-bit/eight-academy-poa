@@ -10,12 +10,12 @@
    Reemplaza los cinco valores. Mientras digan PEGAR_, la plataforma
    muestra un aviso en vez de intentar conectarse.                    */
 export const CONFIG = {
-  apiKey:            "PEGAR_apiKey",
-  authDomain:        "PEGAR_authDomain",        // p. ej. eight-poa.firebaseapp.com
-  projectId:         "PEGAR_projectId",         // p. ej. eight-poa
-  storageBucket:     "PEGAR_storageBucket",
-  messagingSenderId: "PEGAR_messagingSenderId",
-  appId:             "PEGAR_appId"
+  apiKey:            "AIzaSyCgZHuvgzTel4YhT1RyL1EwWr92LlpwlT8",
+  authDomain:        "eight-academy-poa.firebaseapp.com",
+  projectId:         "eight-academy-poa",
+  storageBucket:     "eight-academy-poa.firebasestorage.app",
+  messagingSenderId: "498475293544",
+  appId:             "1:498475293544:web:a35028ca7c5c828f98d4dd"
 };
 
 /* ---------- 2 · Dominio institucional ----------
