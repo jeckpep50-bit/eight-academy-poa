@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cargar datos · Eight Academy POA</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0e1223;color:#e8ecf8;font:400 16px/1.6 "Source Sans 3",Arial,sans-serif;
+  min-height:100vh;display:grid;place-items:center;padding:24px}
+.caja{width:min(600px,100%);background:#161c32;border:1px solid #2b3350;border-radius:16px;padding:30px}
+h1{font-size:22px;font-weight:700;margin-bottom:6px}
+p.sub{color:#b3bcd6;font-size:15px;margin-bottom:22px}
+.paso{border-top:1px solid #2b3350;padding:18px 0}
+.paso:last-of-type{border-bottom:1px solid #2b3350;margin-bottom:20px}
+.paso h2{font-size:15px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:9px}
+.paso .n{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#0e1223;background:#7dc39a;
+  width:22px;height:22px;border-radius:50%;display:grid;place-items:center}
+.paso.pendiente .n{background:#3b456a;color:#8d96b3}
+button{min-height:46px;padding:0 20px;border-radius:10px;border:1px solid #7ba2f5;background:#7ba2f5;
+  color:#0b1022;font:700 15px "Source Sans 3";cursor:pointer}
+button.sec{background:transparent;color:#7ba2f5}
+button:disabled{opacity:.45;cursor:not-allowed}
+input[type=file]{width:100%;padding:14px;border:1px dashed #3b456a;border-radius:10px;
+  background:#1c2340;color:#b3bcd6;font-size:14px}
+#log{font-family:"IBM Plex Mono",monospace;font-size:13px;line-height:1.7;color:#b3bcd6;
+  background:#0e1223;border:1px solid #2b3350;border-radius:10px;padding:14px;
+  max-height:240px;overflow:auto;white-space:pre-wrap}
+.ok{color:#7dc39a}.mal{color:#f0907e}.amb{color:#e0a548}
+</style>
+</head><body>
+<div class="caja">
+  <h1>Cargar los POA en Firestore</h1>
+  <p class="sub">Se hace <b>una sola vez</b>, y se repite solo cuando cambien los datos.
+     Sube <span style="font-family:'IBM Plex Mono',monospace">datos/datos.json</span> del repositorio.</p>
+
+  <div class="paso pendiente" id="p1">
+    <h2><span class="n">1</span> Identifícate como super administrador</h2>
+    <button id="bEntrar" type="button">Entrar con Google</button>
+    <p id="quien" style="margin-top:10px;font-size:14px;color:#b3bcd6"></p>
+  </div>
+
+  <div class="paso pendiente" id="p2">
+    <h2><span class="n">2</span> Elige el archivo</h2>
+    <input type="file" id="archivo" accept="application/json,.json" disabled>
+  </div>
+
+  <div class="paso pendiente" id="p3">
+    <h2><span class="n">3</span> Súbelo</h2>
+    <button id="bSubir" type="button" disabled>Escribir en Firestore</button>
+  </div>
+
+  <div id="log">Esperando…</div>
+  <p style="margin-top:16px"><a href="./index.html" style="color:#7ba2f5">← Volver al tablero</a></p>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFirestore, doc, writeBatch }
+  from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { CONFIG, DOMINIO, SUPERADMINS, AREAS, CONFIGURADO } from "./config.js";
+
+const $=s=>document.querySelector(s), log=$("#log");
+let linea=[];
+const di=(t,c)=>{ linea.push(c?`<span class="${c}">${t}</span>`:t); log.innerHTML=linea.join("\n"); log.scrollTop=1e6; };
+const listo=(id,si)=>$(id).classList.toggle("pendiente",!si);
+
+if(!CONFIGURADO){ di("Falta pegar la configuración en config.js","mal"); throw new Error("sin config"); }
+
+const app=initializeApp(CONFIG), auth=getAuth(app), db=getFirestore(app);
+let datos=null, admin=false;
+
+$("#bEntrar").addEventListener("click",()=>{
+  const p=new GoogleAuthProvider(); p.setCustomParameters({hd:DOMINIO,prompt:"select_account"});
+  signInWithPopup(auth,p).catch(e=>di("No se pudo entrar: "+e.code,"mal"));
+});
+
+onAuthStateChanged(auth,u=>{
+  if(!u){ $("#quien").textContent=""; return; }
+  const correo=(u.email||"").toLowerCase();
+  admin = correo.endsWith("@"+DOMINIO) && SUPERADMINS.map(c=>c.toLowerCase()).includes(correo);
+  $("#quien").textContent = u.email + (admin ? " · super administrador" : " · sin permiso de escritura");
+  listo("#p1",admin); listo("#p2",admin);
+  $("#archivo").disabled=!admin;
+  if(admin){ di("Identidad verificada: "+u.email,"ok"); }
+  else{ di(u.email+" no está en la lista de super administradores.","mal"); }
+});
+
+$("#archivo").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{
+    datos=JSON.parse(await f.text());
+    const n=(datos.events||[]).length;
+    if(!n) throw new Error("el archivo no trae actividades");
+    di(`Leído: ${n} actividades, generado ${datos.generated||"sin fecha"}`,"ok");
+    const porArea={}; datos.events.forEach(v=>{ (porArea[v.area]=porArea[v.area]||[]).push(v); });
+    AREAS.forEach(a=>di(`   ${a.padEnd(13)} ${String((porArea[a]||[]).length).padStart(4)}`));
+    const sueltas=Object.keys(porArea).filter(a=>!AREAS.includes(a));
+    if(sueltas.length) di("Áreas no reconocidas: "+sueltas.join(", "),"amb");
+    listo("#p3",true); $("#bSubir").disabled=false;
+  }catch(err){ datos=null; di("No se pudo leer: "+err.message,"mal"); }
+});
+
+$("#bSubir").addEventListener("click",async()=>{
+  if(!datos||!admin) return;
+  $("#bSubir").disabled=true; di("Escribiendo…");
+  try{
+    const porArea={}; AREAS.forEach(a=>porArea[a]=[]);
+    datos.events.forEach(v=>{ if(porArea[v.area]) porArea[v.area].push(v); });
+    const lote=writeBatch(db);
+    AREAS.forEach(a=>lote.set(doc(db,"poa",a),{area:a,events:porArea[a],n:porArea[a].length}));
+    lote.set(doc(db,"meta","general"),{
+      generated: datos.generated||"", total: datos.events.length,
+      subidoPor: auth.currentUser.email, subidoEl: new Date().toISOString()
+    });
+    await lote.commit();
+    di(`Listo: ${AREAS.length} áreas + meta escritos. ${datos.events.length} actividades en Firestore.`,"ok");
+    di("Ya puedes abrir el tablero.","ok");
+  }catch(err){
+    $("#bSubir").disabled=false;
+    di("Rechazado: "+(err.code||err.message),"mal");
+    di("Si dice permission-denied, revisa que tu correo esté también en firestore.rules.","amb");
+  }
+});
+</script>
+</body></html>

@@ -1,0 +1,24 @@
+# Netlify publica solo la carpeta public/.
+# La carpeta datos/ nunca se sube: las actividades viven en Firestore
+# y se descargan después de iniciar sesión.
+
+[build]
+  publish = "public"
+  command = ""
+
+# Cabeceras de seguridad básicas para un sitio estático.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+# El enlace de acceso por correo vuelve a la raíz con parámetros:
+# hay que servir index.html sin romper la consulta.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false

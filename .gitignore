@@ -1,0 +1,25 @@
+# ============================================================
+# Los datos NO van al repositorio.
+#
+# datos.json contiene las 764 actividades con nombres de personas
+# del equipo. Aunque el repositorio sea privado, mantenerlo fuera
+# evita que acabe expuesto por un cambio de visibilidad, un fork
+# o un clon en un equipo ajeno.
+#
+# Ese archivo vive solo en el equipo de quien administra, y se sube
+# a Firestore una vez con public/cargar-datos.html.
+# ============================================================
+datos/
+*.json.bak
+
+# Copias de trabajo
+*.pptx
+*.pdf
+*.mp3
+*.wav
+
+# Sistema
+Thumbs.db
+desktop.ini
+.DS_Store
+.netlify/

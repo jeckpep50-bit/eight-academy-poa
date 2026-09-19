@@ -1,0 +1,51 @@
+rules_version = '2';
+
+// ============================================================
+// Reglas de Firestore · Eight Academy POA
+//
+// Esto vive en el servidor de Firebase y es la única barrera que
+// cuenta. Aunque alguien edite el JavaScript en su navegador, no
+// puede leer ni escribir nada que estas reglas no permitan.
+//
+// Se pegan en: Firebase → Firestore Database → Reglas → Publicar
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Identidad verificada y del dominio institucional.
+    function delDominio() {
+      return request.auth != null
+          && request.auth.token.email_verified == true
+          && request.auth.token.email.lower().matches('.*@eightacademy[.]edu[.]ec');
+    }
+
+    // Super administradores: los únicos que escriben.
+    // Para dar de alta a alguien, añade su correo AQUÍ y también en
+    // public/config.js. Si solo lo pones allá, la pantalla le mostrará
+    // los botones pero el servidor le rechazará cada cambio.
+    function esAdmin() {
+      return delDominio()
+          && request.auth.token.email.lower() in [
+               'dsroblesl@eightacademy.edu.ec'
+             ];
+    }
+
+    // Las actividades, un documento por área.
+    match /poa/{area} {
+      allow read:  if delDominio();
+      allow write: if esAdmin();
+    }
+
+    // Fecha de generación y demás datos del conjunto.
+    match /meta/{doc} {
+      allow read:  if delDominio();
+      allow write: if esAdmin();
+    }
+
+    // Todo lo que no esté declarado arriba queda cerrado.
+    match /{documento=**} {
+      allow read, write: if false;
+    }
+  }
+}

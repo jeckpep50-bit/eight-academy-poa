@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Eight Academy — Plataforma de Auditoría y Gestión 2026–2027</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 100'%3E%3Cpath d='M30,50 C30,22 58,22 75,50 C92,78 120,78 120,50 C120,22 92,22 75,50 C58,78 30,78 30,50 Z' fill='none' stroke='%230EA5E9' stroke-width='19'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Poppins:wght@600;700&display=swap">
+<style>
+/* ============================================================
+   Eight Academy · sistema visual
+   Áreas  = bloque sólido + monograma   (identidad)
+   Estado = píldora con contorno        (situación)
+   Prioridad = franja lateral            (urgencia)
+   ============================================================ */
+:root{
+  /* neutros con sesgo azul, tomados del azul profundo de la marca */
+  --bg:#f5f7fc; --surface:#ffffff; --surface-2:#f0f3fa; --surface-3:#e6eaf5;
+  --ink:#121734; --ink-2:#48506e; --ink-3:#656d89;
+  --line:#dde2ef; --line-2:#c4ccdf;
+
+  --accent:#1e2a78; --accent-2:#2f3fa6; --accent-ink:#ffffff; --accent-soft:#e6e9fa;
+  --brand-yellow:#f5d04e;
+
+  /* áreas: separadas en matiz y en luminosidad */
+  --kids:#0273ae;    --kids-soft:#e0f2fe;    --kids-ink:#ffffff;
+  --prim:#c9226c;    --prim-soft:#fce7f3;    --prim-ink:#ffffff;
+  --sec:#0f766e;     --sec-soft:#ccfbf1;     --sec-ink:#ffffff;
+  --zoo:#4d7c0f;     --zoo-soft:#ecfccb;     --zoo-ink:#ffffff;
+  --riesgo:#9f6107;  --riesgo-soft:#fef3c7;  --riesgo-ink:#ffffff;
+  --dece:#6d28d9;    --dece-soft:#ede9fe;    --dece-ink:#ffffff;
+  --mkt:#bc470a;     --mkt-soft:#ffedd5;     --mkt-ink:#ffffff;
+
+  /* estado: sólo en píldoras con contorno, nunca en bloque sólido */
+  --good:#15803d;  --good-soft:#eafaf0;
+  --warn:#b45309;  --warn-soft:#fdf4e3;
+  --justif:#9a3412;--justif-soft:#fdeee6;
+  --crit:#be123c;  --crit-soft:#fdeaef;
+  --absent:#475069;--absent-soft:#eceff6;
+
+  /* clasificación de complejidad de gestión: deliberadamente muy saturada para
+     distinguirse a simple vista de cualquier color de área o estado debajo */
+  --class-grande:#e0002a; --class-mediana:#ff6a00; --class-pequena:#00a63e;
+
+  /* rampa secuencial de un solo tono para el mapa de calor (magnitud, no identidad) */
+  --heat1:#e8ecfb; --heat2:#cdd6f4; --heat3:#aebce9; --heat4:#8fa1dd; --heat5:#7286d2;
+  --heat-ink:#141a45;
+  --crit-ink:#ffffff; --warn-ink:#ffffff;
+  --shadow-sm:0 1px 2px rgba(18,23,52,.05);
+  --shadow:0 1px 3px rgba(18,23,52,.06), 0 8px 26px rgba(18,23,52,.07);
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a0d1a; --surface:#121729; --surface-2:#171d33; --surface-3:#1f2740;
+    --ink:#eaecf6; --ink-2:#a9b1cb; --ink-3:#7d859f;
+    --line:#252c48; --line-2:#333c5e;
+    --accent:#93a2ff; --accent-2:#b3bdff; --accent-ink:#0a0d1a; --accent-soft:#1b2150;
+    --kids:#38bdf8;   --kids-soft:#0b2b40;   --kids-ink:#04202f;
+    --prim:#f472b6;   --prim-soft:#3d132a;   --prim-ink:#2d0b1d;
+    --sec:#2dd4bf;    --sec-soft:#0a312d;    --sec-ink:#052220;
+    --zoo:#a3e635;    --zoo-soft:#26330d;    --zoo-ink:#1d2a06;
+    --riesgo:#fbbf24; --riesgo-soft:#352a06; --riesgo-ink:#2a1f03;
+    --dece:#a78bfa;   --dece-soft:#271c4a;   --dece-ink:#1b1235;
+    --mkt:#fb923c;    --mkt-soft:#3a1e0b;    --mkt-ink:#2b1405;
+    --good:#4ade80;  --good-soft:#0d2e1b;
+    --warn:#fbbf24;  --warn-soft:#332608;
+    --justif:#fb923c;--justif-soft:#3a1d0b;
+    --crit:#fb7185;  --crit-soft:#3d1320;
+    --absent:#94a0bd;--absent-soft:#1c2236;
+    --class-grande:#ff3b5c; --class-mediana:#ff9d2e; --class-pequena:#2fe37a;
+    --heat1:#1c2350; --heat2:#253066; --heat3:#2f3d80; --heat4:#3b4b9c; --heat5:#4a5cb8;
+    --heat-ink:#e4e8fc;
+    --crit-ink:#2a0c14; --warn-ink:#2a1f03;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+    --shadow:0 1px 3px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a0d1a; --surface:#121729; --surface-2:#171d33; --surface-3:#1f2740;
+  --ink:#eaecf6; --ink-2:#a9b1cb; --ink-3:#7d859f;
+  --line:#252c48; --line-2:#333c5e;
+  --accent:#93a2ff; --accent-2:#b3bdff; --accent-ink:#0a0d1a; --accent-soft:#1b2150;
+  --kids:#38bdf8;   --kids-soft:#0b2b40;   --kids-ink:#04202f;
+  --prim:#f472b6;   --prim-soft:#3d132a;   --prim-ink:#2d0b1d;
+  --sec:#2dd4bf;    --sec-soft:#0a312d;    --sec-ink:#052220;
+  --zoo:#a3e635;    --zoo-soft:#26330d;    --zoo-ink:#1d2a06;
+  --riesgo:#fbbf24; --riesgo-soft:#352a06; --riesgo-ink:#2a1f03;
+  --dece:#a78bfa;   --dece-soft:#271c4a;   --dece-ink:#1b1235;
+  --mkt:#fb923c;    --mkt-soft:#3a1e0b;    --mkt-ink:#2b1405;
+  --good:#4ade80;  --good-soft:#0d2e1b;
+  --warn:#fbbf24;  --warn-soft:#332608;
+  --justif:#fb923c;--justif-soft:#3a1d0b;
+  --crit:#fb7185;  --crit-soft:#3d1320;
+  --absent:#94a0bd;--absent-soft:#1c2236;
+  --class-grande:#ff3b5c; --class-mediana:#ff9d2e; --class-pequena:#2fe37a;
+  --heat1:#1c2350; --heat2:#253066; --heat3:#2f3d80; --heat4:#3b4b9c; --heat5:#4a5cb8;
+  --heat-ink:#e4e8fc;
+  --crit-ink:#2a0c14; --warn-ink:#2a1f03;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+  --shadow:0 1px 3px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.45);
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:96px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:400 16px/1.55 "Source Sans 3","Segoe UI",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.num,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+a{color:var(--accent);text-underline-offset:2px}
+:focus-visible{outline:3px solid var(--accent-2);outline-offset:2px;border-radius:4px}
+
+/* ---------------- portada ejecutiva ---------------- */
+header.top{background:
+    radial-gradient(900px 420px at 88% -10%, rgba(125,211,252,.16), transparent 60%),
+    radial-gradient(700px 380px at 8% 110%, rgba(167,139,250,.14), transparent 62%),
+    linear-gradient(152deg,#0a0e1e 0%,#151d47 58%,#1e2a78 100%);
+  color:#fff;padding:30px 5vw 34px}
+.brand{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.logo-mark{width:82px;height:55px;flex:none}
+.brand .word{display:flex;flex-direction:column;gap:2px;line-height:1}
+.brand .word .n1{font-family:"Poppins",sans-serif;font-weight:700;font-size:29px;letter-spacing:-.022em}
+.brand .word .n2{font-family:"Poppins",sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.2em;color:var(--brand-yellow)}
+.brand .divider{width:1px;height:46px;background:rgba(255,255,255,.22)}
+.brand .ctx{font:600 12.5px/1.4 "Source Sans 3";letter-spacing:.09em;text-transform:uppercase;color:#a8b3e6}
+
+.hero{margin-top:26px;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:30px;align-items:start}
+.hero h1{font-family:"Source Serif 4",Georgia,serif;font-weight:600;
+  font-size:clamp(29px,3.3vw,44px);line-height:1.12;margin:0;text-wrap:balance;letter-spacing:-.015em}
+.hero .lede{margin:14px 0 0;color:#ccd3f2;font-size:16.5px;max-width:60ch}
+.hero .lede b{color:#fff;font-weight:600}
+.verdict{border:1px solid rgba(255,255,255,.18);border-radius:var(--radius);
+  background:rgba(255,255,255,.06);padding:18px 20px;backdrop-filter:blur(3px)}
+.verdict .vh{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.verdict .vlabel{font:700 11.5px "Source Sans 3";letter-spacing:.14em;text-transform:uppercase;color:#a8b3e6}
+.verdict .vstate{font-family:"Source Serif 4",Georgia,serif;font-size:21px;font-weight:600;color:#fff}
+.verdict p{margin:0;font-size:14.5px;line-height:1.55;color:#c8d0ee}
+.hero-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:22px;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.16);border-radius:var(--radius);overflow:hidden}
+.hero-kpis .k{background:rgba(10,14,30,.55);padding:15px 17px}
+.hero-kpis .kn{font-family:"IBM Plex Mono",monospace;font-size:31px;font-weight:600;color:#fff;line-height:1.1}
+.hero-kpis .kl{font-size:12.5px;color:#aab4e2;margin-top:3px;line-height:1.35}
+
+.role-bar{display:flex;flex-wrap:wrap;gap:11px;align-items:center;margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,.14)}
+.role-bar label{font:700 11.5px "Source Sans 3";text-transform:uppercase;letter-spacing:.1em;color:#a8b3e6}
+.role-bar select{padding:9px 12px;border-radius:9px;border:1px solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.1);color:#fff;font:500 14.5px "Source Sans 3"}
+.role-bar select option{color:#121734}
+.role-note{font-size:12.5px;color:#93a0d4;max-width:56ch;line-height:1.45}
+@media(max-width:900px){ .hero{grid-template-columns:1fr} .hero-kpis{grid-template-columns:repeat(2,1fr)} }
+
+/* ---------------- navegación ---------------- */
+nav.quicknav{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:3px;align-items:center;
+  background:color-mix(in srgb, var(--surface) 92%, transparent);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);padding:10px 5vw;box-shadow:var(--shadow-sm)}
+nav.quicknav a{display:inline-flex;align-items:baseline;gap:7px;font:600 14px "Source Sans 3";
+  color:var(--ink-2);text-decoration:none;padding:7px 11px;border-radius:9px;white-space:nowrap;
+  border:1px solid transparent}
+nav.quicknav a .nn{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-3)}
+nav.quicknav a:hover{background:var(--surface-2);color:var(--ink)}
+nav.quicknav a.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+nav.quicknav a.active .nn{color:var(--accent-ink);opacity:.75}
+
+main{max-width:1400px;margin:0 auto;padding:26px 24px 72px;display:flex;flex-direction:column;gap:24px}
+section{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:26px 28px;box-shadow:var(--shadow)}
+.shead{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.shead .snum{flex:none;width:36px;height:36px;border-radius:10px;background:var(--accent);color:var(--accent-ink);
+  display:flex;align-items:center;justify-content:center;font:600 15px "IBM Plex Mono"}
+.shead h2{margin:0;font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:23px;
+  letter-spacing:-.01em;line-height:1.2;text-wrap:balance}
+.shead .spurpose{margin:5px 0 0;color:var(--ink-2);font-size:14.5px;max-width:86ch;line-height:1.5}
+section > .sub{margin:0 0 14px;color:var(--ink-2);font-size:14.5px;max-width:86ch}
+
+.group-title{display:flex;align-items:center;gap:12px;padding:4px 2px 0}
+.group-title .gt-label{font:700 12px "Source Sans 3";letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
+.group-title .gt-line{flex:1;height:1px;background:var(--line-2)}
+
+/* ---------------- ÁREAS: bloque sólido + monograma ---------------- */
+.a-kids{--c:var(--kids);--cs:var(--kids-soft);--ci:var(--kids-ink)}
+.a-prim{--c:var(--prim);--cs:var(--prim-soft);--ci:var(--prim-ink)}
+.a-sec{--c:var(--sec);--cs:var(--sec-soft);--ci:var(--sec-ink)}
+.a-zoo{--c:var(--zoo);--cs:var(--zoo-soft);--ci:var(--zoo-ink)}
+.a-riesgo{--c:var(--riesgo);--cs:var(--riesgo-soft);--ci:var(--riesgo-ink)}
+.a-dece{--c:var(--dece);--cs:var(--dece-soft);--ci:var(--dece-ink)}
+.a-mkt{--c:var(--mkt);--cs:var(--mkt-soft);--ci:var(--mkt-ink)}
+
+.atag{display:inline-flex;align-items:stretch;border-radius:7px;overflow:hidden;
+  border:1px solid var(--c);background:var(--cs);white-space:nowrap;vertical-align:middle;line-height:1}
+.atag .mono-tk{background:var(--c);color:var(--ci);font:700 11.5px/1 "IBM Plex Mono";
+  letter-spacing:.04em;padding:6px 7px;display:flex;align-items:center}
+.atag .aname{color:var(--c);font:600 13px/1 "Source Sans 3";padding:6px 9px;display:flex;align-items:center}
+.atag.only .aname{display:none}
+.atag.lg .mono-tk{font-size:13px;padding:8px 10px}
+.atag.lg .aname{font-size:15px;padding:8px 12px}
+
+/* ---------------- ESTADO: píldora con contorno ---------------- */
+.pill{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:99px;
+  font:700 12.5px "Source Sans 3";letter-spacing:.03em;max-width:100%;
+  background:var(--surface);border:1.5px solid currentColor}
+.pill .gl{font-size:11px;line-height:1}
+.pill.good{color:var(--good)} .pill.warn{color:var(--warn)} .pill.justif{color:var(--justif)}
+.pill.crit{color:var(--crit)} .pill.absent{color:var(--absent)}
+.pill.solid{background:var(--crit-soft)}
+
+/* ---------------- PRIORIDAD: franja + badge ---------------- */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:7px;
+  font:700 11.5px "Source Sans 3";letter-spacing:.08em;text-transform:uppercase}
+.badge.c{background:var(--crit);color:var(--crit-ink)}
+.badge.a{background:var(--warn);color:var(--warn-ink)}
+.badge.m{background:var(--justif-soft);color:var(--justif);box-shadow:inset 0 0 0 1px currentColor}
+.badge.b{background:var(--good-soft);color:var(--good);box-shadow:inset 0 0 0 1px currentColor}
+.badge.n{background:var(--absent-soft);color:var(--absent);box-shadow:inset 0 0 0 1px currentColor}
+
+/* ---------------- CLASIFICACIÓN: distintivo de estrellas ---------------- */
+/* cuarta capa del sistema visual, adicional a Área/Estado/Prioridad: cuánto toma
+   organizar la actividad. Deliberadamente ajena al resto de la paleta (colores
+   muy saturados) para que se lea como marca aparte y no se confunda con área o estado. */
+.dh-title-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.class-tab{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;
+  font:700 11.5px "Source Sans 3";letter-spacing:.02em;background:var(--surface-2);
+  border:1.5px solid var(--line-2);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.class-tab:hover{border-color:var(--ink-3)}
+.class-tab .stars{font-size:11px;letter-spacing:-1px}
+.class-tab.cb-grande{color:var(--class-grande);border-color:currentColor}
+.class-tab.cb-mediana{color:var(--class-mediana);border-color:currentColor}
+.class-tab.cb-pequena{color:var(--class-pequena);border-color:currentColor}
+
+.class-panel{padding:14px 24px 6px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.class-hint{margin:0 0 10px;font-size:12.5px;color:var(--ink-3)}
+.class-options{display:flex;flex-direction:column;gap:7px}
+.class-opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;
+  border:1.5px solid var(--line);background:var(--surface);font:600 13px "Source Sans 3";
+  color:var(--ink);cursor:pointer;text-align:left;width:100%}
+.class-opt:hover{background:var(--surface-3)}
+.class-opt .stars{font-size:13px;letter-spacing:-1px;min-width:40px;flex:none}
+.class-opt.grande .stars{color:var(--class-grande)}
+.class-opt.mediana .stars{color:var(--class-mediana)}
+.class-opt.pequena .stars{color:var(--class-pequena)}
+.class-opt.active{box-shadow:inset 0 0 0 1.5px currentColor}
+.class-opt.grande.active{color:var(--class-grande)}
+.class-opt.mediana.active{color:var(--class-mediana)}
+.class-opt.pequena.active{color:var(--class-pequena)}
+
+.class-badge{position:absolute;top:-7px;right:-5px;font-size:10px;line-height:1;letter-spacing:-1.5px;
+  padding:2px 4px 1px;border-radius:5px;background:var(--surface);box-shadow:0 1px 3px rgba(18,23,52,.4);
+  pointer-events:none}
+.mev .class-badge{top:-5px;right:-4px;font-size:8px;padding:1px 3px;letter-spacing:-1px}
+.class-badge.cb-grande{color:var(--class-grande)}
+.class-badge.cb-mediana{color:var(--class-mediana)}
+.class-badge.cb-pequena{color:var(--class-pequena)}
+
+/* ---------------- cifras ---------------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:13px}
+.tile{border:1px solid var(--line);border-radius:12px;padding:17px 18px;background:var(--surface-2);
+  border-left:5px solid var(--line-2)}
+.tile .metric{font-family:"IBM Plex Mono";font-size:30px;font-weight:600;line-height:1.05;letter-spacing:-.02em}
+.tile .label{color:var(--ink-2);font-size:13.5px;margin-top:6px;line-height:1.35}
+a.tile{color:inherit;text-decoration:none;display:block;transition:border-color .15s,background .15s,transform .15s}
+a.tile:hover{border-color:var(--accent);background:var(--surface-3);transform:translateY(-1px)}
+.tile.crit{border-left-color:var(--crit)} .tile.good{border-left-color:var(--good)}
+.tile[class*="a-"]{border-left-color:var(--c)}
+.tile .tarea{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+
+.legend{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.legitem{display:inline-flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--line);
+  border-radius:10px;background:var(--surface-2)}
+.areadates{display:flex;flex-direction:column;gap:8px}
+.areadates .ad{display:flex;align-items:center;gap:11px}
+.areadates .ad .mono{font-size:14px;color:var(--ink-2)}
+.sub{color:var(--ink-2);font-size:14.5px;line-height:1.5}
+
+/* ---------------- controles ---------------- */
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+select,input{padding:9px 12px;border:1px solid var(--line-2);border-radius:9px;background:var(--surface);
+  color:var(--ink);font:400 14.5px "Source Sans 3"}
+.controls select{max-width:248px}
+.controls input{min-width:220px;max-width:300px}
+button{padding:9px 16px;border:1px solid var(--accent);border-radius:9px;background:var(--accent);
+  color:var(--accent-ink);font:600 14px "Source Sans 3";cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button.sm{padding:6px 12px;font-size:13px}
+button:hover{filter:brightness(1.08)}
+button:active{transform:translateY(1px);filter:brightness(.94)}
+button[disabled]{opacity:.55;cursor:not-allowed;filter:none;transform:none}
+.btnrow{display:flex;flex-wrap:wrap;gap:10px}
+label.toggle{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2);cursor:pointer}
+label.toggle input{width:17px;height:17px;accent-color:var(--accent)}
+
+/* ---------------- tablas ---------------- */
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{padding:12px 13px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--surface-2);position:sticky;top:0;z-index:1;
+  font:700 12px "Source Sans 3";letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);
+  border-bottom:2px solid var(--line-2)}
+tbody tr:nth-child(even) td{background:color-mix(in srgb, var(--surface-2) 45%, transparent)}
+tr.clickable{cursor:pointer;touch-action:manipulation}
+button,.ev,.mev,a.tile,nav.quicknav a{touch-action:manipulation}
+tr.clickable:hover td{background:var(--accent-soft)}
+.scroll{overflow:auto;max-height:660px;border:1px solid var(--line);border-radius:12px}
+.scroll table{margin:0}
+
+/* ---------------- calendario ---------------- */
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:7px}
+.cal-head span{font:700 12px "Source Sans 3";color:var(--ink-3);text-align:center;
+  text-transform:uppercase;letter-spacing:.1em}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.day{min-height:122px;border:1px solid var(--line);border-radius:10px;padding:7px;background:var(--surface);
+  display:flex;flex-direction:column;gap:4px}
+.day.pad{background:transparent;border-color:transparent}
+.day .dn{font:600 13px "IBM Plex Mono";color:var(--ink-3)}
+.day.today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.day.today .dn{color:var(--accent);font-weight:700}
+.ev{position:relative;font-size:12.5px;line-height:1.3;padding:5px 7px;border-radius:6px;cursor:pointer;
+  background:var(--cs);color:var(--c);border-left:5px solid var(--c);font-weight:500}
+/* código de área dentro del propio evento: identifica el área sin depender del color */
+.evtk{font:700 9.5px/1 "IBM Plex Mono";letter-spacing:.05em;background:var(--c);color:var(--ci);
+  padding:2px 4px;border-radius:3px;margin-right:6px;display:inline-block;vertical-align:1px}
+.mev .evtk{font-size:9px;padding:1px 3px;margin-right:4px}
+.ev:hover{filter:brightness(.96)}
+.ev.inferida{border-left-style:dotted;opacity:.75}
+
+.compare-grid{display:grid;gap:14px}
+.compare-grid.wide{grid-auto-flow:column;grid-auto-columns:320px;overflow-x:auto;padding-bottom:10px}
+.compare-col{border:1px solid var(--line);border-radius:12px;padding:13px;background:var(--surface-2);min-width:0}
+.compare-col h3{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.mini-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.mday{min-height:62px;border:1px solid var(--line);border-radius:7px;padding:4px;background:var(--surface);
+  display:flex;flex-direction:column;gap:3px;min-width:0}
+.mday.pad{background:transparent;border-color:transparent}
+.mdn{font:600 10.5px "IBM Plex Mono";color:var(--ink-3)}
+.mev{position:relative;padding:3px 5px;border-radius:5px;cursor:pointer;font-size:11px;line-height:1.25;font-weight:500;
+  background:var(--cs);color:var(--c);border-left:3px solid var(--c);overflow-wrap:anywhere;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ---------------- hallazgos ---------------- */
+.findings-list{display:flex;flex-direction:column;gap:14px}
+.finding{border:1px solid var(--line);border-left:6px solid var(--line-2);border-radius:12px;
+  padding:18px 20px;background:var(--surface)}
+.finding.p-critica{border-left-color:var(--crit)}
+.finding.p-alta{border-left-color:var(--warn)}
+.finding.p-media{border-left-color:var(--justif)}
+.finding.p-baja{border-left-color:var(--good)}
+.finding.reviewed{opacity:.55;background:var(--surface-2)}
+.finding-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.finding-head .title{font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:18px;min-width:0;overflow-wrap:anywhere;
+  line-height:1.3;flex:1 1 320px;text-wrap:balance}
+.finding-grid{display:grid;gap:12px}
+.finding-grid .fr{display:grid;grid-template-columns:154px minmax(0,1fr);gap:16px;align-items:start}
+.finding-grid .fl{font:700 11.5px "Source Sans 3";letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);padding-top:2px}
+.finding-grid .fv{font-size:14.5px;color:var(--ink);line-height:1.5}
+.finding .trace{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line-2)}
+.trace{font-size:12.5px;color:var(--ink-3);font-family:"IBM Plex Mono";overflow-wrap:anywhere;line-height:1.5}
+.finding .actions{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
+@media(max-width:700px){ .finding-grid .fr{grid-template-columns:1fr;gap:3px} }
+
+.quality-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+.qrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;
+  border:1px solid var(--line);border-radius:11px;background:var(--surface-2);font-size:14.5px}
+
+.bars svg{width:100%;display:block}
+.barhead{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.barmeta{color:var(--ink-2);font-size:13.5px}
+
+dialog{border:none;border-radius:16px;padding:0;background:var(--surface);color:var(--ink);
+  box-shadow:0 24px 70px rgba(10,14,30,.4);max-width:640px;width:92vw}
+dialog::backdrop{background:rgba(10,13,26,.62)}
+dialog .dh{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;
+  align-items:flex-start;gap:14px}
+dialog .dh strong{font-family:"Source Serif 4",Georgia,serif;font-size:19px;font-weight:600;line-height:1.3}
+dialog .db{padding:6px 24px 24px;font-size:14.5px}
+dialog .db dt{color:var(--ink-3);font:700 11.5px "Source Sans 3";text-transform:uppercase;
+  letter-spacing:.09em;margin-top:16px}
+dialog .db dd{margin:4px 0 0;line-height:1.5}
+dialog button.close{background:none;border:none;color:var(--ink-2);font-size:22px;cursor:pointer;
+  padding:0 4px;line-height:1}
+
+footer{text-align:center;padding:34px 24px 44px;color:var(--ink-3);font-size:13px;
+  display:flex;flex-direction:column;align-items:center;gap:13px;line-height:1.6}
+footer .logo-mark{width:52px;height:35px;opacity:.45}
+
+.empty{color:var(--ink-3);padding:18px 0}
+.calendar .empty{grid-column:1/-1}
+.muted{color:var(--ink-3)}
+.stack-1{margin-top:14px}
+.stack-2{margin-top:10px}
+.rule-top{padding-top:16px}
+.guia{font-size:14.5px;color:var(--ink-2);padding-left:20px;margin:0;line-height:1.7}
+.legend.spaced{margin-bottom:12px}
+.group-title.tight{padding:14px 0 6px}
+.barblock{margin-bottom:13px}
+.cell-note{color:var(--ink-2)}
+.errbox{border-color:var(--crit)}
+.errbox h2{color:var(--crit)}
+.skip{position:absolute;left:-9999px;top:0;z-index:100;background:var(--accent);color:var(--accent-ink);
+  padding:12px 18px;border-radius:0 0 10px 0;font:600 15px "Source Sans 3";text-decoration:none}
+.skip:focus{left:0}
+.hidden{display:none!important}
+[data-role="docente"] .admin-only,[data-role="directivo"] .admin-only{display:none!important}
+.tag{display:inline-block;font:700 10.5px "Source Sans 3";letter-spacing:.09em;text-transform:uppercase;
+  padding:3px 8px;border-radius:6px;background:var(--surface-3);color:var(--ink-3);margin-left:8px}
+
+@media(max-width:860px){
+  /* en móvil la rejilla de 7 columnas es ilegible: vista agenda */
+  .cal-head{display:none}
+  .calendar{display:flex;flex-direction:column;gap:8px}
+  .day{min-height:0;flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:8px;padding:11px 13px}
+  .day.pad,.day.vacio{display:none}
+  .day .dn{min-width:34px;font-size:14px}
+  .ev{flex:1 1 100%;font-size:14px;padding:9px 11px}
+  main{padding:18px 14px 48px}
+  nav.quicknav{padding:9px 14px}
+  section{padding:20px 17px}
+  .shead{gap:11px}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important;scroll-behavior:auto} }
+
+@media print{
+  nav.quicknav,.controls,.role-bar,.finding .actions,#s3,#s5{display:none!important}
+  body{background:#fff;font-size:11pt}
+  header.top{background:none;color:#000;padding:0 0 12pt}
+  .hero h1,.verdict .vstate{color:#000}
+  .hero .lede,.verdict p,.brand .ctx{color:#333}
+  .hero-kpis .kn{color:#000} .hero-kpis .kl{color:#444}
+  .hero-kpis .k{background:#f4f4f7}
+  section{break-inside:avoid;box-shadow:none;border:1px solid #bbb;padding:12pt}
+  .scroll{max-height:none;overflow:visible;border:none}
+  .finding{break-inside:avoid}
+  a[href^="#"]{text-decoration:none;color:inherit}
+}
+
+
+/* ============================================================
+   v3 · capa de lectura ejecutiva
+   ============================================================ */
+
+/* ---- cifras: sans proporcional, no mono tabular (se lee mejor en grande) ---- */
+.hero-kpis .kn,.tile .metric{font-family:"Source Sans 3","Segoe UI",Arial,sans-serif;
+  font-variant-numeric:proportional-nums;font-weight:700;letter-spacing:-.025em}
+.hero-kpis .kn{font-size:34px}
+.tile .metric{font-size:32px}
+
+/* ---- panel "ahora mismo" ---- */
+.ahora{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:13px;overflow:hidden;margin-bottom:18px}
+.ahora .a{background:var(--surface-2);padding:16px 18px;display:flex;flex-direction:column;gap:3px;
+  text-decoration:none;color:inherit;transition:background .15s}
+a.a:hover{background:var(--surface-3)}
+.ahora .an{font:700 30px/1.05 "Source Sans 3";font-variant-numeric:proportional-nums;letter-spacing:-.025em}
+.ahora .al{font-size:13.5px;color:var(--ink-2);line-height:1.35}
+.ahora .ax{font-size:12.5px;color:var(--ink-3);margin-top:4px}
+.ahora .a.urge .an{color:var(--crit)}
+.ahora .a.pronto .an{color:var(--warn)}
+.ahora .a.calma .an{color:var(--good)}
+
+/* ---- barra de avance de validación ---- */
+.avance{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:var(--surface-2);
+  margin-bottom:16px;display:flex;flex-direction:column;gap:10px}
+.avance .at{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.avance .atl{font:600 14.5px "Source Sans 3"}
+.avance .atv{font:700 15px "Source Sans 3";font-variant-numeric:proportional-nums}
+.avance .track{height:10px;border-radius:99px;background:var(--surface-3);overflow:hidden;display:flex}
+.avance .fill{height:100%;background:var(--good);transition:width .3s ease}
+.avance .hint{font-size:12.5px;color:var(--ink-3)}
+
+/* ---- mapa de calor: secuencial de un solo tono ---- */
+.heat{overflow-x:auto;padding-bottom:6px}
+.heat table{border-collapse:separate;border-spacing:2px;width:100%;min-width:660px}
+.heat th{background:none;border:none;position:static;text-transform:none;letter-spacing:.02em;
+  font:600 12.5px "Source Sans 3";color:var(--ink-2);padding:4px 6px;text-align:center}
+.heat th.ra{text-align:left;min-width:150px}
+.heat td{border:none;padding:0;text-align:center}
+.heat .cell{display:flex;align-items:center;justify-content:center;height:38px;border-radius:6px;
+  font:600 13px "Source Sans 3";font-variant-numeric:tabular-nums;cursor:default}
+.heat .h0{background:var(--surface-2);color:var(--ink-3)}
+.heat .h1{background:var(--heat1)} .heat .h2{background:var(--heat2)}
+.heat .h3{background:var(--heat3)} .heat .h4{background:var(--heat4)}
+.heat .h5{background:var(--heat5)}
+.heat .h1,.heat .h2,.heat .h3,.heat .h4,.heat .h5{color:var(--heat-ink)}
+.heat-leyenda{display:flex;align-items:center;gap:9px;margin-top:12px;flex-wrap:wrap;font-size:13px;color:var(--ink-2)}
+.heat-leyenda .paso{display:flex;gap:2px}
+.heat-leyenda .paso span{width:30px;height:14px;border-radius:3px;display:block}
+
+/* ---- gráfico de carga ---- */
+.barblock{margin-bottom:20px}
+.chart-wrap{position:relative}
+.chart-wrap svg{width:100%;display:block;overflow:visible}
+.tt{position:fixed;z-index:60;pointer-events:none;background:var(--ink);color:var(--surface);
+  padding:8px 11px;border-radius:8px;font:500 13px "Source Sans 3";line-height:1.4;
+  box-shadow:0 8px 24px rgba(10,13,26,.35);max-width:280px;opacity:0;transition:opacity .12s}
+.tt.on{opacity:1}
+.tt b{font-weight:700}
+
+/* ---- calendario: jerarquía visual ---- */
+.day.conflicto{box-shadow:inset 3px 0 0 var(--crit)}
+.day .dmark{margin-left:auto;font:700 10.5px "Source Sans 3";color:var(--crit);letter-spacing:.04em}
+.day .dtop{display:flex;align-items:center;gap:6px}
+.day.hoy{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.day.hoy .dn{color:var(--accent);font-weight:700}
+.hoy-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;
+  background:var(--accent);color:var(--accent-ink);font:700 10.5px "Source Sans 3";letter-spacing:.06em}
+
+/* ---- tabla alterna de un gráfico ---- */
+.tabla-alterna{margin-top:12px}
+.tabla-alterna summary{cursor:pointer;font:600 13.5px "Source Sans 3";color:var(--accent);padding:6px 0}
+.tabla-alterna summary:hover{text-decoration:underline}
+.tabla-alterna .scroll{max-height:320px;margin-top:8px}
+
+@media(max-width:860px){
+  .ahora{grid-template-columns:1fr 1fr}
+  .heat table{min-width:620px}
+}
+@media print{
+  .ahora{break-inside:avoid}
+  .tabla-alterna[open] .scroll{max-height:none}
+  .tt{display:none}
+}
+
+
+/* ============================================================
+   v4 · capa táctil  (iPad, tablets Android, híbridos con lápiz)
+   Regla de fondo: nada que sólo funcione con hover o con un
+   puntero fino. Todo lo que se puede señalar se puede tocar.
+   ============================================================ */
+
+html{-webkit-text-size-adjust:100%}
+body{-webkit-tap-highlight-color:transparent}
+
+/* barras del sistema en iPad/iPhone a pantalla completa */
+header.top{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(safe-area-inset-right))}
+nav.quicknav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(safe-area-inset-right))}
+main{padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+footer{padding-bottom:max(44px,calc(env(safe-area-inset-bottom) + 24px))}
+
+/* desplazamiento con inercia y sin arrastrar la página que hay detrás */
+.scroll,.heat,.compare-grid.wide,nav.quicknav,dialog .db{
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+
+/* ---- el hover deja de existir: en iOS se queda pegado tras tocar ---- */
+@media (hover:none){
+  nav.quicknav a:hover{background:none;color:var(--ink-2)}
+  nav.quicknav a.active:hover{background:var(--accent);color:var(--accent-ink)}
+  a.tile:hover{border-color:var(--line);background:var(--surface-2);transform:none}
+  a.a:hover{background:var(--surface-2)}
+  button:hover{filter:none}
+  .ev:hover{filter:none}
+  tr.clickable:hover td{background:inherit}
+  .tabla-alterna summary:hover{text-decoration:none}
+  /* el tooltip del mapa de calor no puede ser la única vía de lectura:
+     en táctil se toca la celda y abre su ficha */
+  .tt{display:none!important}
+}
+
+/* respuesta inmediata al tocar: sustituye al destello gris del sistema */
+.ev:active,.mev:active{filter:brightness(.93);transform:scale(.985)}
+a.tile:active,.ahora .a:active,.legitem:active{background:var(--surface-3)}
+tr.clickable:active td{background:var(--accent-soft)}
+.heat .cell:active{box-shadow:inset 0 0 0 3px var(--accent)}
+
+/* ============================================================
+   objetivos táctiles: 44 px reales cuando el puntero es grueso
+   ============================================================ */
+@media (pointer:coarse){
+  button,.btnrow button{min-height:44px;padding-inline:18px}
+  button.sm{min-height:44px;padding:9px 15px;font-size:13.5px}
+  select,input{min-height:44px;font-size:16px}   /* 16px evita el zoom automático de iOS al enfocar */
+  .controls select,.controls input{max-width:none;flex:1 1 210px;min-width:0}
+  .controls{gap:12px}
+  .role-bar select{min-height:44px;font-size:16px}
+  label.toggle{min-height:44px;padding:0 4px;font-size:15px}
+  label.toggle input{width:24px;height:24px}
+  nav.quicknav a{min-height:44px;align-items:center;padding:10px 14px}
+  dialog button.close{min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;
+    border-radius:10px;background:var(--surface-2)}
+  .tabla-alterna summary{min-height:44px;display:flex;align-items:center}
+  th,td{padding:14px 13px}
+  .heat .cell{height:46px;font-size:14px;cursor:pointer}
+  .heat table{border-spacing:3px}
+}
+
+/* la barra de secciones cabe en una línea y se desliza, en vez de ocupar
+   tres filas fijas de la pantalla del iPad */
+@media (pointer:coarse) and (max-width:1200px){
+  nav.quicknav{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none}
+  nav.quicknav::-webkit-scrollbar{display:none}
+  nav.quicknav a{flex:none;scroll-snap-align:center}
+}
+
+/* ============================================================
+   calendario
+   ============================================================ */
+
+/* paso de mes: el control principal en pantalla táctil */
+.mstep{display:flex;align-items:center;gap:14px;margin:2px 0 14px}
+.mstep .mnav{flex:none;width:52px;height:52px;padding:0;display:flex;align-items:center;justify-content:center;
+  font:400 26px/1 "Source Sans 3";border-radius:14px;background:var(--surface-2);color:var(--accent);
+  border:1px solid var(--line-2)}
+.mstep .mnav:disabled{opacity:.34}
+.mstep .mlabel{flex:1;text-align:center;font-family:"Source Serif 4",Georgia,serif;font-weight:600;
+  font-size:21px;letter-spacing:-.01em;line-height:1.2}
+.mstep .mcount{display:block;font:500 13px "Source Sans 3";color:var(--ink-3);margin-top:3px}
+.swipe-hint{display:none;margin:-6px 0 14px;font-size:13px;color:var(--ink-3);text-align:center}
+@media (pointer:coarse){ .swipe-hint{display:block} }
+
+/* cabecera del día: ahora es un botón que abre el día completo */
+.day .dtop{min-height:26px;border-radius:7px;padding:2px 3px;cursor:pointer;user-select:none;
+  -webkit-touch-callout:none}
+.day .dtop:active{background:var(--surface-3)}
+.day .dmore{margin-left:auto;font:600 11px "IBM Plex Mono";color:var(--ink-3);
+  background:var(--surface-2);border-radius:99px;padding:2px 7px}
+.day.conflicto .dmore{color:var(--crit)}
+.ev,.mev{-webkit-touch-callout:none}
+
+/* iPad en horizontal: la rejilla de 7 columnas cabe, pero las celdas
+   necesitan altura para que cada actividad sea tocable */
+@media (pointer:coarse) and (min-width:861px){
+  .calendar,.cal-head{gap:6px}
+  .day{min-height:140px;padding:8px}
+  .day .dtop{min-height:44px}
+  .day .dn{font-size:14px}
+  /* 36 px: en la rejilla del mes un día con 19 actividades dispararía la fila
+     entera. Se queda por encima del mínimo WCAG de 24 px y la vía cómoda es
+     tocar la cabecera del día, que abre la lista completa a tamaño de dedo. */
+  .ev{min-height:36px;padding:10px 9px;font-size:13px;line-height:1.25;overflow-wrap:anywhere}
+}
+
+/* iPad en vertical y tablets menores: agenda, con filas cómodas */
+@media (max-width:860px){
+  .day{gap:10px;padding:13px 15px}
+  .day .dtop{width:100%;min-height:44px;display:flex;align-items:center}
+  .day .dn{font-size:15px}
+  .ev{min-height:46px;padding:14px 13px;font-size:14.5px;overflow-wrap:anywhere}
+}
+
+/* vista comparada: en tableta las minirrejillas de 7 columnas son
+   intocables, así que cada área se lee como agenda y se desliza de una en una */
+@media (max-width:1180px) and (pointer:coarse){
+  #compareGrid{grid-auto-flow:column!important;grid-auto-columns:min(88vw,340px)!important;
+    grid-template-columns:none!important;overflow-x:auto;padding-bottom:12px;
+    scroll-snap-type:x mandatory}
+  .compare-col{scroll-snap-align:start}
+  .mini-cal{display:flex;flex-direction:column;gap:7px}
+  .mday{min-height:0;flex-direction:row;flex-wrap:wrap;align-items:center;gap:9px;padding:9px 11px}
+  .mday.pad,.mday.vacio{display:none}
+  .mdn{min-width:26px;font-size:13px}
+  .mev{flex:1 1 100%;min-height:44px;font-size:13.5px;padding:13px 11px;
+    display:block;-webkit-line-clamp:none;overflow:visible}
+}
+.compare-grid.wide{scroll-snap-type:x proximity}
+.compare-grid.wide .compare-col{scroll-snap-align:start}
+
+/* ============================================================
+   fichas de detalle: hoja inferior en pantalla táctil
+   ============================================================ */
+dialog .db{max-height:min(62vh,560px);overflow:auto}
+@media (pointer:coarse){
+  dialog{width:100%;max-width:none;margin:0;position:fixed;bottom:0;left:0;top:auto;
+    border-radius:20px 20px 0 0;max-height:92dvh;
+    padding-bottom:env(safe-area-inset-bottom)}
+  dialog .dh{position:sticky;top:0;background:var(--surface);z-index:2;border-radius:20px 20px 0 0;
+    padding:18px 20px 16px}
+  dialog .dh::before{content:"";position:absolute;top:7px;left:50%;transform:translateX(-50%);
+    width:42px;height:4px;border-radius:99px;background:var(--line-2)}
+  dialog .db{max-height:none;padding:6px 20px 24px}
+  dialog[open]{animation:sheetUp .22s ease-out}
+}
+@keyframes sheetUp{from{transform:translateY(22px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){ dialog[open]{animation:none} }
+
+/* lista de actividades dentro de una ficha (día o celda del mapa de calor) */
+.dia-lista{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+/* la identidad del área la lleva el monograma y la franja, no un fondo teñido:
+   sobre el tinte la traza en --ink-3 se quedaba en 3,7:1 */
+.dia-it{display:flex;align-items:flex-start;gap:11px;padding:12px 13px;border-radius:11px;
+  background:var(--surface-2);border-left:5px solid var(--c);cursor:pointer;min-height:56px}
+.dia-it:active{filter:brightness(.95)}
+.dia-tx{display:flex;flex-direction:column;gap:3px;min-width:0}
+.dia-tx b{font-size:14.5px;line-height:1.35;overflow-wrap:anywhere}
+.dia-tx .trace{font-size:12px}
+
+/* ============================================================
+   impresión: nada de lo táctil sobra en papel
+   ============================================================ */
+@media print{ .mstep,.swipe-hint,.day .dmore{display:none!important} }
+</style>
+</head>
+<body>
+
+<a href="#s1" class="skip">Saltar al contenido</a>
+<header class="top">
+  <div class="brand">
+    <svg class="logo-mark" viewBox="0 0 150 100" role="img" aria-label="Eight Academy">
+      <g fill="none" stroke-linecap="round">
+        <path d="M30,50 C30,22 58,22 75,50 C92,78 120,78 120,50 C120,22 92,22 75,50 C58,78 30,78 30,50 Z" stroke="#ffffff" stroke-width="28"/>
+        <g stroke-width="19" pathLength="100">
+          <path d="M30,50 C30,22 58,22 75,50 C92,78 120,78 120,50 C120,22 92,22 75,50 C58,78 30,78 30,50 Z" pathLength="100" stroke="#7fb2e5" stroke-dasharray="14 86" stroke-dashoffset="0"/>
+          <path d="M30,50 C30,22 58,22 75,50 C92,78 120,78 120,50 C120,22 92,22 75,50 C58,78 30,78 30,50 Z" pathLength="100" stroke="#3f7cc4" stroke-dasharray="12 88" stroke-dashoffset="-14"/>
+          <path d="M30,50 C30,22 58,22 75,50 C92,78 120,78 120,50 C120,22 92,22 75,50 C58,78 30,78 30,50 Z" pathLength="100" stroke="#f0a020" stroke-dasharray="12 88" stroke-dashoffset="-26"/>
+          <path d="M30,50 C30,22 58,22 75,50 C92,78 120,78 120,50 C120,22 92,22 75,50 C58,78 30,78 30,50 Z" pathLength="100" stroke="#f3a8bc" stroke-dasharray="14 86" stroke-dashoffset="-38"/>
+          <path d="M30,50 C30,22 58,22 75,50 C92,78 120,78 120,50 C120,22 92,22 75,50 C58,78 30,78 30,50 Z" pathLength="100" stroke="#2bae8f" stroke-dasharray="14 86" stroke-dashoffset="-52"/>
+          <path d="M30,50 C30,22 58,22 75,50 C92,78 120,78 120,50 C120,22 92,22 75,50 C58,78 30,78 30,50 Z" pathLength="100" stroke="#f0a020" stroke-dasharray="12 88" stroke-dashoffset="-66"/>
+          <path d="M30,50 C30,22 58,22 75,50 C92,78 120,78 120,50 C120,22 92,22 75,50 C58,78 30,78 30,50 Z" pathLength="100" stroke="#f6d154" stroke-dasharray="22 78" stroke-dashoffset="-78"/>
+        </g>
+      </g>
+    </svg>
+    <div class="word"><span class="n1">Eight Academy</span><span class="n2">UNIDAD EDUCATIVA</span></div>
+    <span class="divider"></span>
+    <span class="ctx">Plataforma de auditoría<br>y gestión institucional</span>
+  </div>
+
+  <div class="hero">
+    <div>
+      <h1>Auditoría del calendario institucional 2026–2027</h1>
+      <p class="lede"><b id="hdr-count">—</b> actividades leídas directamente de los siete POA — Kids, Primaria, Secundaria, DECE, Marketing, Gestión de Riesgos y Zoobotánica — y comparadas entre sí, para que ningún cumplimiento, ni incumplimiento, pase desapercibido.</p>
+      <div class="hero-kpis" id="heroKpis"></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+  <div class="role-bar">
+    <label for="roleSelect">Perfil</label>
+    <select id="roleSelect">
+      <option value="admin">Super Administrador</option>
+      <option value="directivo">Directivo / Autoridad</option>
+      <option value="docente">Docente</option>
+    </select>
+    <label for="mySection" id="mySectionLabel" class="hidden">Mi área</label>
+    <select id="mySection" class="hidden"></select>
+    <span class="role-note">El perfil ajusta qué paneles se muestran. Es un archivo HTML autónomo sin servidor ni inicio de sesión, por lo que no sustituye un control de acceso institucional.</span>
+  </div>
+</header>
+
+<nav class="quicknav" aria-label="Secciones del informe">
+  <a href="#s1"><span class="nn">01</span>Panorama</a>
+  <a href="#s2"><span class="nn">02</span>Semáforo</a>
+  <a href="#s3"><span class="nn">03</span>Calendario</a>
+  <a href="#s4"><span class="nn">04</span>Coincidencias</a>
+  <a href="#s5"><span class="nn">05</span>Carga semanal</a>
+  <a href="#s6"><span class="nn">06</span>Conflictos</a>
+  <a href="#s7"><span class="nn">07</span>Matriz de riesgos</a>
+  <a href="#s8"><span class="nn">08</span>Alertas 15 días</a>
+  <a href="#s9"><span class="nn">09</span>Exportar</a>
+  <a href="#s10"><span class="nn">10</span>Trazabilidad</a>
+  <a href="#s11" class="admin-only"><span class="nn">11</span>Calidad de datos</a>
+</nav>
+
+<main>
+
+<section id="s1">
+  <div class="shead"><div class="snum">1</div><div><h2>Panorama ejecutivo</h2><p class="spurpose">Todo lo que aparece a continuación se calcula en vivo a partir de los siete archivos POA; no hay cifras escritas a mano.</p></div></div>
+  <div class="ahora" id="ahora"></div>
+  <div class="grid stack-1" id="kpis"></div>
+  <div class="group-title rule-top"><span class="gt-label">Actividades por área</span><span class="gt-line"></span></div>
+  <div class="grid stack-2" id="areaTiles"></div>
+</section>
+
+<section id="s2">
+  <div class="shead"><div class="snum">2</div><div><h2>Semáforo de sincronización institucional</h2><p class="spurpose">Estado de cada actividad que aparece en dos o más áreas. Se comparan las fechas declaradas por cada POA.</p></div></div>
+  <div class="legend">
+    <span class="pill good"><span class="gl" aria-hidden="true">✓</span>Correctamente sincronizado</span>
+    <span class="pill warn"><span class="gl" aria-hidden="true">!</span>Requiere revisión</span>
+    <span class="pill justif"><span class="gl" aria-hidden="true">▲</span>Diferencia justificada</span>
+    <span class="pill crit"><span class="gl" aria-hidden="true">✕</span>Inconsistencia crítica</span>
+    <span class="pill absent"><span class="gl" aria-hidden="true">○</span>Actividad ausente</span>
+  </div>
+  <div class="grid stack-1" id="semCounts"></div>
+  <div class="group-title rule-top"><span class="gt-label">Código de color por área</span><span class="gt-line"></span></div>
+  <div class="legend stack-2" id="areaLegend"></div>
+</section>
+
+<section id="s3">
+  <div class="shead"><div class="snum">3</div><div><h2>Calendario institucional comparado</h2><p class="spurpose" id="calSub" aria-live="polite" aria-atomic="true">Cuando varias áreas registran la misma actividad, todas se muestran: no se agrupan ni se ocultan duplicados.</p></div></div>
+  <div class="controls">
+    <select id="viewMode" aria-label="Modo de vista del calendario">
+      <option value="unified">Vista unificada</option>
+      <option value="compare3">Comparada · Kids | Primaria | Secundaria</option>
+      <option value="compare7">Comparada · las 7 áreas</option>
+    </select>
+    <select id="fMonth" aria-label="Filtrar por mes"></select>
+    <select id="fArea" aria-label="Filtrar por área"></select>
+    <select id="fResp" aria-label="Filtrar por responsable"></select>
+    <select id="fStatus" aria-label="Filtrar por estado de la fecha">
+      <option value="ALL">Cualquier estado de fecha</option>
+      <option value="EXACTA">Fecha exacta</option>
+      <option value="CORREGIDA">Fecha corregida</option>
+      <option value="INFERIDA">Fecha inferida</option>
+      <option value="MES POR DEFINIR">Mes sin día definido</option>
+      <option value="COMPLEMENTARIA">Recuperada de otra hoja</option>
+      <option value="REVISAR">Requiere validación</option>
+    </select>
+    <input id="fText" aria-label="Buscar actividad, responsable o unidad" placeholder="Buscar actividad, responsable, unidad…">
+    <label class="toggle"><input type="checkbox" id="fRecur"> Ocultar recurrencias inferidas</label>
+    <button id="btnHoy" type="button">Ir a hoy</button>
+    <button class="ghost" id="clearFilters" type="button">Limpiar</button>
+  </div>
+  <div class="mstep">
+    <button class="mnav" id="mPrev" type="button" aria-label="Ir al mes anterior">&lsaquo;</button>
+    <div class="mlabel" id="mLabel" aria-live="polite" aria-atomic="true">—</div>
+    <button class="mnav" id="mNext" type="button" aria-label="Ir al mes siguiente">&rsaquo;</button>
+  </div>
+  <p class="swipe-hint">Desliza el calendario a izquierda o derecha para cambiar de mes. Toca el número de un día para ver todo lo que ocurre en él.</p>
+  <div id="unifiedView">
+    <div class="cal-head"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
+    <div id="calendar" class="calendar"></div>
+  </div>
+  <div id="compareView" class="hidden"><div class="compare-grid" id="compareGrid"></div></div>
+</section>
+
+<section id="s4">
+  <div class="shead"><div class="snum">4</div><div><h2>Coincidencias de actividades entre áreas</h2><p class="spurpose">Actividades detectadas en dos o más POA. Cada fila muestra la fecha declarada por cada área y el estado de sincronización resultante.</p></div></div>
+  <div class="controls">
+    <select id="famStatus" aria-label="Filtrar coincidencias por estado"><option value="ALL">Todos los estados</option></select>
+  </div>
+  <div class="scroll"><table><thead><tr><th>Actividad</th><th>Estado</th><th>Áreas y fechas declaradas</th><th>Dispersión</th></tr></thead><tbody id="families"></tbody></table></div>
+</section>
+
+<section id="s5">
+  <div class="shead"><div class="snum">5</div><div><h2>Carga semanal y sobrecarga por área</h2><p class="spurpose">Umbral declarado: 0–3 actividades por semana = equilibrada · 4 = moderada · 5–6 = elevada · 7 o más = sobrecarga.</p></div></div>
+  <div class="legend spaced">
+    <span class="pill good"><span class="gl" aria-hidden="true">✓</span>Equilibrada · 0–3</span>
+    <span class="pill warn"><span class="gl" aria-hidden="true">!</span>Moderada · 4</span>
+    <span class="pill justif"><span class="gl" aria-hidden="true">▲</span>Elevada · 5–6</span>
+    <span class="pill crit"><span class="gl" aria-hidden="true">✕</span>Sobrecarga · 7 o más</span>
+  </div>
+  <div class="group-title"><span class="gt-label">Dónde se concentra el año</span><span class="gt-line"></span></div>
+  <p class="sub stack-2">Actividades por área y mes. Cuanto más intenso el tono, más carga concentra esa área en ese mes.</p>
+  <div class="heat" id="heat"></div>
+  <div class="heat-leyenda" id="heatLeyenda"></div>
+
+  <div class="group-title rule-top"><span class="gt-label">Semana a semana</span><span class="gt-line"></span></div>
+  <div class="bars stack-2" id="loadChart"></div>
+  <details class="tabla-alterna">
+    <summary>Ver las semanas cargadas como tabla</summary>
+    <p class="sub" id="loadTablaSub"></p>
+    <div class="scroll"><table><thead><tr><th>Área</th><th>Semana</th><th>Actividades</th><th>Nivel</th></tr></thead><tbody id="loadTabla"></tbody></table></div>
+  </details>
+</section>
+
+<section id="s6">
+  <div class="shead"><div class="snum">6</div><div><h2>Conflictos y choques operativos</h2><p class="spurpose">Detección automática entre áreas distintas con la fórmula <span class="mono">InicioA ≤ FinB Y InicioB ≤ FinA</span>. Se descartan los solapamientos triviales entre dos períodos de vacaciones o feriados.</p></div></div>
+  <div class="controls">
+    <select id="cSev" aria-label="Filtrar conflictos por severidad"><option value="ALL">Toda severidad</option><option value="CRÍTICA">Crítica</option><option value="ALTA">Alta</option><option value="MEDIA">Media</option></select>
+    <select id="cArea" aria-label="Filtrar conflictos por área"></select>
+    <button class="ghost sm" id="cMore" type="button">Mostrar más</button>
+  </div>
+  <p class="sub" id="cSub" aria-live="polite" aria-atomic="true"></p>
+  <div class="scroll"><table><thead><tr><th>Severidad</th><th>Área A</th><th>Actividad A</th><th>Área B</th><th>Actividad B</th><th>Fechas</th></tr></thead><tbody id="conflicts"></tbody></table></div>
+</section>
+
+<section id="s7">
+  <div class="shead"><div class="snum">7</div><div><h2>Matriz de riesgos y recomendaciones de corrección</h2><p class="spurpose">Cada hallazgo separa estrictamente el dato encontrado, el hallazgo, la inferencia del sistema, la recomendación y si requiere validación humana. Todo enlaza con su archivo, hoja y fila de origen.</p></div></div>
+  <div class="controls">
+    <select id="rPrio" aria-label="Filtrar hallazgos por prioridad"><option value="ALL">Toda prioridad</option><option>CRÍTICA</option><option>ALTA</option><option>MEDIA</option><option>BAJA</option></select>
+    <button class="ghost sm" id="rMore" type="button">Mostrar más</button>
+    <button class="ghost sm admin-only" id="rReset" type="button">Restablecer revisados</button>
+  </div>
+  <p class="sub" id="rSub" aria-live="polite" aria-atomic="true"></p>
+  <div class="avance" id="avance"></div>
+  <div class="findings-list" id="risks"></div>
+</section>
+
+<section id="s8">
+  <div class="shead"><div class="snum">8</div><div><h2>Planificación pormenorizada · alertas de 15 días</h2><p class="spurpose">Regla fija: <span class="mono">fecha de alerta = fecha de inicio − 15 días</span>. Recordatorio: <i>«Enviar la planificación pormenorizada de esta actividad al correo planificacion@eightacademy.edu.ec»</i>. Al ser un archivo estático sin servidor, la plataforma no envía el correo por sí sola: muestra la cuenta regresiva y lo incrusta como alarma dentro del .ics de la sección 9.</p></div></div>
+  <div class="controls">
+    <select id="aArea" aria-label="Filtrar alertas por área"></select>
+    <select id="aWin" aria-label="Filtrar alertas por plazo">
+      <option value="9999">Todas</option>
+      <option value="15">Próximos 15 días</option>
+      <option value="30">Próximos 30 días</option>
+      <option value="-1">Vencidas</option>
+    </select>
+  </div>
+  <div class="scroll"><table><thead><tr><th>Actividad</th><th>Área</th><th>Inicio</th><th>Enviar antes de</th><th>Estado</th><th>Responsable</th></tr></thead><tbody id="alerts"></tbody></table></div>
+</section>
+
+<section id="s9">
+  <div class="shead"><div class="snum">9</div><div><h2>Exportación e integración con Google Calendar (.ics)</h2><p class="spurpose">Archivo .ics real por área o institucional completo, con la alarma de 15 días incluida. Sin OAuth: la importación es manual y queda bajo control de la institución.</p></div></div>
+  <div class="btnrow" id="icsBtns"></div>
+  <p class="sub stack-2" id="icsAviso" aria-live="polite" aria-atomic="true"></p>
+  <div class="group-title tight"><span class="gt-label">Cómo importarlo</span><span class="gt-line"></span></div>
+  <ol class="guia">
+    <li>Descarga el .ics del área que necesites.</li>
+    <li>En Google Calendar: <b>Configuración → Importar y exportar → Importar</b>.</li>
+    <li>Elige el archivo y el calendario de destino, y confirma.</li>
+    <li>Cada actividad con prioridad alta lleva una alarma 15 días antes con el recordatorio de planificación.</li>
+  </ol>
+</section>
+
+<section id="s10">
+  <div class="shead"><div class="snum">10</div><div><h2>Trazabilidad: correcciones aplicadas sobre la fuente</h2><p class="spurpose">Toda diferencia entre el archivo original y lo que se muestra aquí queda registrada. Nada se corrige en silencio.</p></div></div>
+  <div class="scroll"><table><thead><tr><th>Área</th><th>Fila</th><th>Tipo</th><th>Original</th><th>Mostrado</th><th>Motivo</th></tr></thead><tbody id="corr"></tbody></table></div>
+</section>
+
+<section id="s11" class="admin-only">
+  <div class="shead"><div class="snum">11</div><div><h2>Auditoría de calidad de datos</h2><p class="spurpose">Verificaciones calculadas en vivo sobre las 7 fuentes.</p></div></div>
+  <div class="quality-grid" id="quality"></div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="logo-mark" viewBox="0 0 150 100" aria-hidden="true">
+    <path d="M30,50 C30,22 58,22 75,50 C92,78 120,78 120,50 C120,22 92,22 75,50 C58,78 30,78 30,50 Z" fill="none" stroke="currentColor" stroke-width="19"/>
+  </svg>
+  <div>Eight Academy · Unidad Educativa · Plataforma de Auditoría y Gestión del Calendario 2026–2027<br>
+  Documento y herramienta de uso interno · planificacion@eightacademy.edu.ec · Datos generados el <span id="genDate" class="mono"></span></div>
+</footer>
+
+<dialog id="detail">
+  <div class="dh">
+    <div class="dh-title-group">
+      <strong id="dTitle">Detalle</strong>
+      <button id="dClassBtn" class="class-tab hidden" type="button" aria-expanded="false" aria-controls="classPanel" onclick="toggleClassPanel()"><span id="dClassStars" class="stars" aria-hidden="true"></span><span id="dClassLabel">Clasificación</span></button>
+    </div>
+    <button class="close" type="button" aria-label="Cerrar detalle" onclick="document.getElementById('detail').close()">✕</button>
+  </div>
+  <div id="classPanel" class="class-panel hidden" role="group" aria-label="Clasificación de complejidad de gestión">
+    <p class="class-hint">¿Cuánto puede tomar organizar esta actividad?</p>
+    <div class="class-options">
+      <button type="button" class="class-opt grande" data-c="grande" onclick="setClass('grande')"><span class="stars" aria-hidden="true">★★★</span>Grande · más de 3 meses</button>
+      <button type="button" class="class-opt mediana" data-c="mediana" onclick="setClass('mediana')"><span class="stars" aria-hidden="true">★★</span>Mediana · 2 meses</button>
+      <button type="button" class="class-opt pequena" data-c="pequena" onclick="setClass('pequena')"><span class="stars" aria-hidden="true">★</span>Pequeña · 1 mes o menos</button>
+    </div>
+  </div>
+  <dl class="db" id="dBody"></dl>
+</dialog>
+
+
+<!-- ============================================================
+     Puerta de acceso. Se queda delante de todo hasta que Firebase
+     confirma una identidad del dominio institucional.
+     ============================================================ -->
+<style>
+#puerta{position:fixed;inset:0;z-index:999;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(900px 420px at 88% -10%,rgba(125,211,252,.16),transparent 60%),
+             radial-gradient(700px 380px at 8% 110%,rgba(167,139,250,.14),transparent 62%),
+             linear-gradient(152deg,#0a0e1e 0%,#151d47 58%,#1e2a78 100%);
+  color:#fff;font-family:"Source Sans 3","Segoe UI",Arial,sans-serif}
+#puerta .caja{width:min(430px,100%);text-align:center;display:flex;flex-direction:column;
+  align-items:center;gap:18px}
+#puerta .marca{display:flex;align-items:center;gap:13px;margin-bottom:6px}
+#puerta .marca svg{width:62px;height:42px}
+#puerta .marca .n1{font-family:"Poppins",sans-serif;font-weight:700;font-size:23px;letter-spacing:-.02em}
+#puerta .marca .n2{font-family:"Poppins",sans-serif;font-weight:700;font-size:9.5px;
+  letter-spacing:.2em;color:#f5d04e;display:block;margin-top:2px}
+#puerta h1{font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:26px;
+  line-height:1.2;margin:0;text-wrap:balance}
+#puerta .sub{color:#aab4e2;font-size:15px;line-height:1.5;margin:0}
+#puerta .dominio{font-family:"IBM Plex Mono",monospace;font-size:13.5px;color:#f5d04e}
+#puerta button{width:100%;min-height:48px;border-radius:11px;border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.1);color:#fff;font:600 15px "Source Sans 3";cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;padding:0 18px}
+#puerta button:hover{background:rgba(255,255,255,.18)}
+#puerta button.principal{background:#f5d04e;color:#1a1400;border-color:#f5d04e}
+#puerta button.principal:hover{filter:brightness(1.06)}
+#puerta button:disabled{opacity:.5;cursor:not-allowed}
+#puerta .o{display:flex;align-items:center;gap:12px;width:100%;color:#7d87b5;font-size:12.5px}
+#puerta .o::before,#puerta .o::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.16)}
+#puerta input{width:100%;min-height:48px;border-radius:11px;padding:0 15px;font-size:16px;
+  border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.07);color:#fff;
+  font-family:inherit}
+#puerta input::placeholder{color:#7d87b5}
+#puerta .aviso{min-height:20px;font-size:13.5px;line-height:1.45}
+#puerta .aviso.mal{color:#fca5a5}
+#puerta .aviso.bien{color:#86efac}
+#puerta .pie{color:#7d87b5;font-size:12px;line-height:1.5;margin-top:4px}
+#puerta.fuera{display:none}
+body.sin-entrar > *:not(#puerta){display:none!important}
+
+/* barra de identidad una vez dentro */
+#quien{display:flex;align-items:center;gap:10px;margin-left:auto;font-size:13px}
+#quien .correo{color:#a8b3e6}
+#quien .rol{font:700 10.5px "Source Sans 3";letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 9px;border-radius:99px;background:rgba(245,208,78,.16);color:#f5d04e}
+#quien button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;
+  border-radius:9px;min-height:34px;padding:0 13px;font:600 13px "Source Sans 3";cursor:pointer}
+</style>
+
+<div id="puerta" class="">
+  <div class="caja">
+    <div class="marca">
+      <svg viewBox="0 0 150 100" aria-hidden="true"><path d="M30,50 C30,22 58,22 75,50 C92,78 120,78 120,50 C120,22 92,22 75,50 C58,78 30,78 30,50 Z" fill="none" stroke="#0EA5E9" stroke-width="19"/></svg>
+      <div style="text-align:left"><span class="n1">Eight Academy</span><span class="n2">UNIDAD EDUCATIVA</span></div>
+    </div>
+
+    <h1>Plataforma de Auditoría y Gestión</h1>
+    <p class="sub">Acceso reservado al personal de<br><span class="dominio" id="pDominio">@eightacademy.edu.ec</span></p>
+
+    <button class="principal" id="bGoogle" type="button">
+      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M45 24c0-1.6-.1-2.7-.4-3.9H24v7.1h12c-.2 1.9-1.5 4.7-4.3 6.6l6.6 5.1C42.2 35.3 45 30.1 45 24z"/><path fill="#34A853" d="M24 46c5.8 0 10.6-1.9 14.1-5.2l-6.6-5.1c-1.8 1.2-4.2 2.1-7.5 2.1-5.7 0-10.6-3.8-12.3-9l-6.9 5.3C8.3 41.1 15.6 46 24 46z"/><path fill="#FBBC05" d="M11.7 28.8c-.5-1.3-.7-2.7-.7-4.1s.3-2.8.7-4.1l-6.9-5.4C3.6 18 3 20.9 3 24s.6 6 1.8 8.8l6.9-4z"/><path fill="#EA4335" d="M24 10.8c3.2 0 5.4 1.4 6.6 2.5l5.8-5.7C32.9 4.3 28.2 2 24 2 15.6 2 8.3 6.9 4.8 15.2l6.9 5.4c1.7-5.2 6.6-9.8 12.3-9.8z"/></svg>
+      Entrar con Google
+    </button>
+
+    <div class="o">o</div>
+
+    <input id="pCorreo" type="email" inputmode="email" autocomplete="email"
+           placeholder="tu.nombre@eightacademy.edu.ec" aria-label="Correo institucional">
+    <button id="bEnlace" type="button">Enviarme un enlace de acceso</button>
+
+    <p class="aviso" id="pAviso" role="status" aria-live="polite"></p>
+    <p class="pie">Solo se admiten cuentas del dominio institucional.<br>
+       Cualquier otro correo será rechazado.</p>
+  </div>
+</div>
+
+<script type="module" src="./acceso.js"></script>
+
+</body>
+</html>
