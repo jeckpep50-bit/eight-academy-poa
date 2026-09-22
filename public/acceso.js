@@ -128,7 +128,9 @@ async function cargarTablero(usuario){
   const meta = await getDoc(doc(db, "meta", "general"));
   window.__DATOS__ = { generated: meta.exists() ? meta.data().generated : "", events: eventos };
 
-  identidad(usuario);
+  const admin = esAdmin(usuario.email);
+  window.__ES_SUPERADMIN__ = admin;
+  identidad(usuario, admin);
   puerta.classList.add("fuera");
   document.body.classList.remove("sin-entrar");
 
@@ -139,26 +141,32 @@ async function cargarTablero(usuario){
 }
 
 /* ---------- barra de identidad ---------- */
-function identidad(usuario){
-  const admin = esAdmin(usuario.email);
+function identidad(usuario, admin){
   document.body.dataset.acceso = admin ? "admin" : "lectura";
 
   const barra = document.createElement("div");
   barra.id = "quien";
-  barra.innerHTML =
-    `<span class="correo">${usuario.email}</span>` +
-    `<span class="rol">${admin ? "Super administrador" : "Solo lectura"}</span>` +
-    `<button type="button" id="bSalir">Salir</button>`;
+  const correo = document.createElement("span");
+  correo.className = "correo";
+  correo.textContent = usuario.email || "";
+  const rol = document.createElement("span");
+  rol.className = "rol";
+  rol.textContent = admin ? "Super administrador" : "Solo lectura";
+  const salir = document.createElement("button");
+  salir.type = "button";
+  salir.id = "bSalir";
+  salir.textContent = "Salir";
+  barra.append(correo, rol, salir);
 
   const destino = document.querySelector(".role-bar") || document.querySelector("header.top");
   if(destino) destino.appendChild(barra);
-  barra.querySelector("#bSalir").addEventListener("click", () => signOut(auth).then(() => location.reload()));
+  salir.addEventListener("click", () => signOut(auth).then(() => location.reload()));
 
   // Mientras no se definan los permisos finos, quien no es super
   // administrador no ve los controles que escriben.
   if(!admin){
     const css = document.createElement("style");
-    css.textContent = `#rReset,.finding .actions button,#dClassBtn{display:none!important}`;
+    css.textContent = `[data-acceso="lectura"] .admin-only,#rReset,.finding .actions button,#dClassBtn{display:none!important}`;
     document.head.appendChild(css);
   }
 }

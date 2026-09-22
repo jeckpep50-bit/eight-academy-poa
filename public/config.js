@@ -31,7 +31,9 @@ export const DOMINIO = "eightacademy.edu.ec";
    la de firestore.rules, en el servidor. Si añades a alguien aquí,
    añádelo también allí o no podrá escribir nada.                    */
 export const SUPERADMINS = [
-  "dsroblesl@eightacademy.edu.ec"
+  "mibermeov@eightacademy.edu.ec",
+  "dsroblesl@eightacademy.edu.ec",
+  "lemaciasb@eightacademy.edu.ec"
 ];
 
 /* ---------- 4 · Áreas ----------

@@ -64,7 +64,14 @@ import { CONFIG, DOMINIO, SUPERADMINS, AREAS, CONFIGURADO } from "./config.js";
 
 const $=s=>document.querySelector(s), log=$("#log");
 let linea=[];
-const di=(t,c)=>{ linea.push(c?`<span class="${c}">${t}</span>`:t); log.innerHTML=linea.join("\n"); log.scrollTop=1e6; };
+const di=(t,c)=>{
+  linea.push(String(t));
+  const fila=document.createElement("div");
+  if(c) fila.className=c;
+  fila.textContent=String(t);
+  log.appendChild(fila);
+  log.scrollTop=1e6;
+};
 const listo=(id,si)=>$(id).classList.toggle("pendiente",!si);
 
 if(!CONFIGURADO){ di("Falta pegar la configuración en config.js","mal"); throw new Error("sin config"); }

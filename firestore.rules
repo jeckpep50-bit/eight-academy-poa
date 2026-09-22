@@ -17,7 +17,8 @@ service cloud.firestore {
     function delDominio() {
       return request.auth != null
           && request.auth.token.email_verified == true
-          && request.auth.token.email.lower().matches('.*@eightacademy[.]edu[.]ec');
+          && request.auth.token.email is string
+          && request.auth.token.email.lower().matches('^[^@]+@eightacademy[.]edu[.]ec$');
     }
 
     // Super administradores: los únicos que escriben.
@@ -27,20 +28,57 @@ service cloud.firestore {
     function esAdmin() {
       return delDominio()
           && request.auth.token.email.lower() in [
-               'dsroblesl@eightacademy.edu.ec'
+               'mibermeov@eightacademy.edu.ec',
+               'dsroblesl@eightacademy.edu.ec',
+               'lemaciasb@eightacademy.edu.ec'
              ];
+    }
+
+    function areaValida(area) {
+      return area in [
+        'KIDS', 'PRIMARIA', 'SECUNDARIA', 'DECE',
+        'MARKETING', 'RIESGOS', 'ZOOBOTANICA'
+      ];
+    }
+
+    function poaValido(area) {
+      return areaValida(area)
+          && request.resource.data.keys().hasOnly(['area', 'events', 'n'])
+          && request.resource.data.area is string
+          && request.resource.data.area == area
+          && request.resource.data.events is list
+          && request.resource.data.events.size() <= 300
+          && request.resource.data.n is int
+          && request.resource.data.n == request.resource.data.events.size();
+    }
+
+    function metaValida() {
+      return request.resource.data.keys().hasOnly([
+               'generated', 'total', 'subidoPor', 'subidoEl'
+             ])
+          && request.resource.data.generated is string
+          && request.resource.data.generated.size() <= 100
+          && request.resource.data.total is int
+          && request.resource.data.total >= 0
+          && request.resource.data.total <= 2100
+          && request.resource.data.subidoPor is string
+          && request.resource.data.subidoPor.lower() == request.auth.token.email.lower()
+          && request.resource.data.subidoEl is string
+          && request.resource.data.subidoEl.size() <= 40;
     }
 
     // Las actividades, un documento por área.
     match /poa/{area} {
       allow read:  if delDominio();
-      allow write: if esAdmin();
+      allow create, update: if esAdmin() && poaValido(area);
+      allow delete: if esAdmin() && areaValida(area);
     }
 
     // Fecha de generación y demás datos del conjunto.
-    match /meta/{doc} {
+    match /meta/general {
       allow read:  if delDominio();
-      allow write: if esAdmin();
+      allow create, update: if esAdmin() && metaValida();
+      allow delete: if esAdmin();
     }
 
     // Todo lo que no esté declarado arriba queda cerrado.

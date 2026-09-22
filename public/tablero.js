@@ -1,5 +1,6 @@
 
 const D = window.__DATOS__;
+const IS_SUPERADMIN = window.__ES_SUPERADMIN__ === true;
 /* ---------------- constantes ---------------- */
 const AREAS = ['KIDS','PRIMARIA','SECUNDARIA','DECE','MARKETING','RIESGOS','ZOOBOTANICA'];
 const ACADEMIC = ['KIDS','PRIMARIA','SECUNDARIA'];
@@ -43,7 +44,7 @@ const addDays = (iso,n) => { const d=parseISO(iso); d.setDate(d.getDate()+n); re
 const endOf = e => e.end || e.start;   // varias vistas lo necesitaban por separado
 const daysFromToday = iso => { if(!iso) return null; const t=new Date(); t.setHours(0,0,0,0); return Math.round((parseISO(iso)-t)/86400000); };
 
-let ROLE='admin', MY_AREA='KIDS', cShow=40, rShow=40;
+let ROLE=IS_SUPERADMIN?'admin':'directivo', MY_AREA='KIDS', cShow=40, rShow=40;
 const hash = s => { let h=0; for(let i=0;i<s.length;i++) h=((h<<5)-h+s.charCodeAt(i))|0; return (h>>>0).toString(36); };
 const RK='ea_riesgos_revisados_v4';
 const getRev=()=>{try{return JSON.parse(localStorage.getItem(RK)||'{}')}catch(e){return{}}};
@@ -80,6 +81,7 @@ function refreshClassUI(){
   document.getElementById('dClassLabel').textContent = c?CLASS_META[c].label:'Clasificación';
 }
 function setClass(c){
+  if(!IS_SUPERADMIN) return;
   if(currentClassEventId==null) return;
   const m=getClassMap();
   if(m[currentClassEventId]===c){ delete m[currentClassEventId]; } else { m[currentClassEventId]=c; }
@@ -581,7 +583,10 @@ function renderRisks(){
     </div>`;
   }).join('') || '<p class="sub">Sin hallazgos con este filtro.</p>';
 }
-window.toggleRev = id => { const m=getRev(); m[id]=!m[id]; setRev(m); renderRisks(); renderAvance(); };
+window.toggleRev = id => {
+  if(!IS_SUPERADMIN) return;
+  const m=getRev(); m[id]=!m[id]; setRev(m); renderRisks(); renderAvance();
+};
 function renderAlerts(){
   const ar=document.getElementById('aArea').value, w=document.getElementById('aWin').value;
   let l=dated.filter(e=>e.planning==='SÍ'&&e.reminder&&!e.recurrente);
@@ -690,6 +695,7 @@ window.dlIcs = (area, boton) => {
 
 /* ---------------- roles / filtros ---------------- */
 function applyRole(r){
+  if(r==='admin' && !IS_SUPERADMIN) r='directivo';
   ROLE=r; document.body.dataset.role=r;
   const doc = r==='docente';
   document.getElementById('mySection').classList.toggle('hidden',!doc);
@@ -715,6 +721,9 @@ function fillSelects(){
     .map(([v,l])=>`<button class="${v==='ALL'?'':'ghost'}" onclick="dlIcs('${v}',this)">.ics ${esc(l)}</button>`).join('');
 }
 function wire(){
+  const roleSelect=document.getElementById('roleSelect');
+  const adminOption=roleSelect.querySelector('option[value="admin"]');
+  if(!IS_SUPERADMIN){ adminOption.disabled=true; adminOption.hidden=true; roleSelect.value='directivo'; }
   ['fMonth','fArea','fResp','fStatus','fText','fRecur','viewMode'].forEach(id=>document.getElementById(id).addEventListener('input',renderCal));
   document.getElementById('btnHoy').addEventListener('click',irAHoy);
   document.getElementById('clearFilters').addEventListener('click',()=>{
@@ -727,7 +736,7 @@ function wire(){
     sincronizarMstep();
     renderCal();
   });
-  document.getElementById('roleSelect').addEventListener('change',e=>applyRole(e.target.value));
+  roleSelect.addEventListener('change',e=>applyRole(e.target.value));
   document.getElementById('mySection').addEventListener('change',e=>{MY_AREA=e.target.value;applyRole('docente')});
   document.getElementById('famStatus').addEventListener('change',renderFamilies);
   document.getElementById('cSev').addEventListener('change',()=>{cShow=40;renderConflicts()});
@@ -735,7 +744,10 @@ function wire(){
   document.getElementById('cMore').addEventListener('click',()=>{cShow+=40;renderConflicts()});
   document.getElementById('rPrio').addEventListener('change',()=>{rShow=40;renderRisks()});
   document.getElementById('rMore').addEventListener('click',()=>{rShow+=40;renderRisks()});
-  document.getElementById('rReset').addEventListener('click',()=>{setRev({});renderRisks();renderAvance()});
+  document.getElementById('rReset').addEventListener('click',()=>{
+    if(!IS_SUPERADMIN) return;
+    setRev({});renderRisks();renderAvance();
+  });
   document.getElementById('aArea').addEventListener('change',renderAlerts);
   document.getElementById('aWin').addEventListener('change',renderAlerts);
 }
@@ -1077,7 +1089,7 @@ function init(){
     renderFamilies(); renderLoads(); renderConflicts();
     renderRisks(); renderCorr(); renderQuality();
     // applyRole() ya dispara renderCal() y renderAlerts(): no se repetían aquí
-    applyRole('admin'); initScrollSpy(); initTactil();
+    applyRole(IS_SUPERADMIN?'admin':'directivo'); initScrollSpy(); initTactil();
   }catch(err){
     document.querySelector('main').insertAdjacentHTML('afterbegin',
       `<section class="errbox"><h2>Error al cargar el tablero</h2><p class="sub">${esc(err.message)}</p></section>`);
