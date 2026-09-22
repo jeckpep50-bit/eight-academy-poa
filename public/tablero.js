@@ -114,7 +114,7 @@ function evRows(e){
     ['Observaciones', esc(e.notas||'')],
     ['Planificación pormenorizada', e.planning==='SÍ' ? `Requerida · enviar antes del ${fmt(e.reminder)} a ${MAIL}` : 'Por validar'],
     ['Texto original en el POA', `<span class="trace">${esc(e.original||'')}</span>`],
-    ['Fuente', `<span class="trace">${esc(e.sourceFile)} · hoja «${esc(e.sourceSheet)}» · fila ${e.sourceRow}</span>`],
+    ['Fuente', `<span class="trace">${esc(e.sourceFile)} · hoja «${esc(e.sourceSheet)}» · fila ${esc(e.sourceRow)}</span>`],
   ];
 }
 
@@ -521,7 +521,7 @@ function renderFamilies(){
 window.showFam = k => {
   const f=FAMS.find(x=>x.key===k); if(!f) return;
   openDetail(f.name, [['Estado',statePill(f.cls, sinEmoji(f.status))],
-    ...f.all.map(e=>[meta(e.area).label, `${esc(e.activity)}<br><span class="mono">${fmt(e.start)}${e.start!==e.end?' – '+fmt(e.end):''}</span><br><span class="trace">${esc(e.sourceFile)} · fila ${e.sourceRow}</span>`])]);
+    ...f.all.map(e=>[meta(e.area).label, `${esc(e.activity)}<br><span class="mono">${fmt(e.start)}${e.start!==e.end?' – '+fmt(e.end):''}</span><br><span class="trace">${esc(e.sourceFile)} · fila ${esc(e.sourceRow)}</span>`])]);
 };
 function renderLoads(){
   const W=900,H=76,PL=28,PB=14;

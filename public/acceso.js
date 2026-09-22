@@ -142,6 +142,11 @@ async function cargarTablero(usuario){
 
   const eventos = [];
   partes.forEach(p => { if(p.exists()) eventos.push(...(p.data().events || [])); });
+  if(eventos.some(e => !Number.isSafeInteger(e.id) || e.id <= 0 ||
+      !Number.isSafeInteger(e.sourceRow) || e.sourceRow < 1) ||
+      new Set(eventos.map(e => e.id)).size !== eventos.length) {
+    throw new Error("Los datos de Firestore contienen identificadores o filas de origen inválidos.");
+  }
   eventos.sort((a,b) => a.id - b.id);
 
   const meta = await getDoc(doc(db, "meta", "general"));

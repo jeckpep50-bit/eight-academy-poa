@@ -101,6 +101,11 @@ $("#archivo").addEventListener("change",async e=>{
     if(!Array.isArray(datos.events) || !datos.events.length || !Array.isArray(datos.corrections)) {
       throw new Error("el archivo debe incluir actividades y correcciones");
     }
+    const ids=datos.events.map(v=>v.id);
+    if(ids.some(id=>!Number.isSafeInteger(id)||id<=0) || new Set(ids).size!==ids.length ||
+       datos.events.some(v=>!Number.isSafeInteger(v.sourceRow)||v.sourceRow<1)) {
+      throw new Error("cada actividad debe tener un ID numérico único y una fila de origen válida");
+    }
     const n=datos.events.length;
     di(`Leído: ${n} actividades y ${datos.corrections.length} correcciones, generado ${datos.generated||"sin fecha"}`,"ok");
     const porArea={}; datos.events.forEach(v=>{ (porArea[v.area]=porArea[v.area]||[]).push(v); });

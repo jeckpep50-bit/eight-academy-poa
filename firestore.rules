@@ -79,14 +79,14 @@ service cloud.firestore {
     match /poa/{area} {
       allow read:  if delDominio();
       allow create, update: if esAdmin() && poaValido(area);
-      allow delete: if esAdmin() && areaValida(area);
+      allow delete: if false;
     }
 
     // Fecha de generación y demás datos del conjunto.
     match /meta/general {
       allow read:  if delDominio();
       allow create, update: if esAdmin() && metaValida();
-      allow delete: if esAdmin();
+      allow delete: if false;
     }
 
     // Cada importación conserva una copia inmutable de sus datos.
