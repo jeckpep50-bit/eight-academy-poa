@@ -54,17 +54,25 @@ service cloud.firestore {
 
     function metaValida() {
       return request.resource.data.keys().hasOnly([
-               'generated', 'total', 'subidoPor', 'subidoEl'
+               'generated', 'total', 'corrections', 'subidoPor', 'subidoEl'
              ])
           && request.resource.data.generated is string
           && request.resource.data.generated.size() <= 100
           && request.resource.data.total is int
           && request.resource.data.total >= 0
           && request.resource.data.total <= 2100
+          && request.resource.data.corrections is list
+          && request.resource.data.corrections.size() <= 200
           && request.resource.data.subidoPor is string
           && request.resource.data.subidoPor.lower() == request.auth.token.email.lower()
           && request.resource.data.subidoEl is string
           && request.resource.data.subidoEl.size() <= 40;
+    }
+
+    function cambioValido() {
+      return request.resource.data.actualizadoPor is string
+          && request.resource.data.actualizadoPor.lower() == request.auth.token.email.lower()
+          && request.resource.data.actualizadoEl is timestamp;
     }
 
     // Las actividades, un documento por área.
@@ -79,6 +87,51 @@ service cloud.firestore {
       allow read:  if delDominio();
       allow create, update: if esAdmin() && metaValida();
       allow delete: if esAdmin();
+    }
+
+    // Cada importación conserva una copia inmutable de sus datos.
+    match /importaciones/{version} {
+      allow read: if esAdmin();
+      allow create: if esAdmin() && metaValida();
+      allow update, delete: if false;
+
+      match /poa/{area} {
+        allow read: if esAdmin();
+        allow create: if esAdmin() && poaValido(area);
+        allow update, delete: if false;
+      }
+    }
+
+    match /revisiones/{hallazgo} {
+      allow read: if delDominio();
+      allow create, update: if esAdmin()
+          && hallazgo.matches('^[a-z0-9]{1,16}$')
+          && request.resource.data.keys().hasOnly([
+               'revisado', 'actualizadoPor', 'actualizadoEl'
+             ])
+          && request.resource.data.keys().hasAll([
+               'revisado', 'actualizadoPor', 'actualizadoEl'
+             ])
+          && cambioValido()
+          && request.resource.data.revisado is bool;
+      allow delete: if false;
+    }
+
+    match /clasificaciones/{actividad} {
+      allow read: if delDominio();
+      allow create, update: if esAdmin()
+          && actividad.matches('^[0-9]{1,10}$')
+          && request.resource.data.keys().hasOnly([
+               'clase', 'actualizadoPor', 'actualizadoEl'
+             ])
+          && request.resource.data.keys().hasAll([
+               'clase', 'actualizadoPor', 'actualizadoEl'
+             ])
+          && cambioValido()
+          && request.resource.data.clase in [
+               'grande', 'mediana', 'pequena', 'ninguna'
+             ];
+      allow delete: if false;
     }
 
     // Todo lo que no esté declarado arriba queda cerrado.

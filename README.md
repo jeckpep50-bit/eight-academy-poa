@@ -29,7 +29,9 @@ public/            ← lo único que Netlify publica
   tablero.js         el programa (sin datos)
   acceso.js          identidad, dominio, carga de datos
   config.js          configuración de Firebase y lista de administradores
-  cargar-datos.html  herramienta de carga, de un solo uso
+  cargar-datos.html  importación con versión recuperable
+  versiones.html     listado y restauración de importaciones
+  gestion.js         sincronización en tiempo real de revisiones y clasificaciones
 datos/             ← NO se sube al repositorio (.gitignore)
   datos.json         las 764 actividades
 firestore.rules    ← se pegan en la consola de Firebase
@@ -88,8 +90,25 @@ git push -u origin main
 ### 5 · Subir los datos, una vez
 
 Abre `https://TU-SITIO.netlify.app/cargar-datos.html`, entra con tu correo de
-super administrador, elige `datos/datos.json` y pulsa escribir. Son siete
-documentos, uno por área, más uno de metadatos.
+super administrador, elige `datos/datos.json` del paquete original y pulsa
+escribir. La carga escribe siete áreas y un documento de metadatos, y conserva
+una copia inmutable en `importaciones/{version}`. El archivo fuente no se
+publica en Netlify ni se incluye en GitHub.
+
+Cada nueva importación reemplaza el POA vigente. Los tableros abiertos detectan
+el cambio y se actualizan. En `versiones.html`, los super administradores pueden
+restaurar una importación anterior; la restauración crea otra versión antes de
+activarla.
+
+Las marcas de hallazgos revisados y las clasificaciones de actividades se
+guardan en `revisiones` y `clasificaciones`. Firestore las sincroniza entre
+sesiones y registra el último autor y momento de cada modificación. Los datos
+que existían únicamente en `localStorage` no se migran automáticamente.
+
+La recuperación point-in-time (PITR) de Firestore requiere una cuenta de
+facturación vinculada y tiene costo de almacenamiento adicional. Las versiones
+de importación descritas arriba funcionan sin PITR, aunque no reemplazan la
+recuperación de todos los cambios de la base a un minuto específico.
 
 ---
 

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Versiones del POA · Eight Academy</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0e1223;color:#e8ecf8;font:16px/1.55 Arial,sans-serif;padding:24px}
+main{max-width:760px;margin:32px auto;background:#161c32;border:1px solid #2b3350;border-radius:16px;padding:28px}
+h1{font-size:25px;margin:0 0 8px}p{color:#b3bcd6}a{color:#8db5ff}ul{list-style:none;padding:0}
+li{border-top:1px solid #2b3350;padding:16px 0;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+small{display:block;color:#b3bcd6}button{border:0;border-radius:9px;padding:12px 18px;background:#f9d44f;color:#11162c;font-weight:700;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}.error{color:#f0907e}.ok{color:#7dc39a}
+</style></head><body><main>
+<h1>Versiones del POA</h1>
+<p>Las importaciones quedan guardadas aquí. Solo los super administradores pueden consultar y restaurar una versión. La restauración se reflejará en los tableros abiertos.</p>
+<p id="estado" role="status">Comprobando acceso…</p>
+<ul id="lista"></ul>
+<p><a href="./cargar-datos.html">Cargar otra versión</a> · <a href="./index.html">Volver al tablero</a></p>
+</main>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFirestore, collection, getDocs, getDoc, doc, writeBatch }
+  from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { CONFIG, SUPERADMINS, AREAS } from "./config.js";
+
+const app=initializeApp(CONFIG), auth=getAuth(app), db=getFirestore(app);
+const estado=document.getElementById("estado"), lista=document.getElementById("lista");
+const esAdmin=u=>u && u.emailVerified && SUPERADMINS.includes((u.email||"").toLowerCase());
+
+onAuthStateChanged(auth,async usuario=>{
+  lista.replaceChildren();
+  if(!esAdmin(usuario)){
+    estado.textContent="Entra al tablero con una cuenta de super administrador para consultar las versiones.";
+    return;
+  }
+  estado.textContent="Cargando versiones…";
+  try{
+    const snapshot=await getDocs(collection(db,"importaciones"));
+    const versiones=snapshot.docs.map(item=>({id:item.id,...item.data()}))
+      .sort((a,b)=>String(b.subidoEl).localeCompare(String(a.subidoEl)));
+    estado.textContent=versiones.length ? `${versiones.length} versiones disponibles.` : "Todavía no hay versiones guardadas.";
+    for(const version of versiones){
+      const fila=document.createElement("li"), info=document.createElement("div");
+      const titulo=document.createElement("strong"), detalle=document.createElement("small");
+      titulo.textContent=`${version.total} actividades · POA ${version.generated||"sin fecha"}`;
+      detalle.textContent=`Importado ${version.subidoEl||""} por ${version.subidoPor||""} · ${version.id}`;
+      info.append(titulo,detalle);
+      const boton=document.createElement("button");
+      boton.type="button"; boton.textContent="Restaurar";
+      boton.addEventListener("click",()=>restaurar(version,boton));
+      fila.append(info,boton); lista.appendChild(fila);
+    }
+  }catch(error){estado.className="error";estado.textContent="No se pudieron leer las versiones: "+(error.code||error.message);}
+});
+
+async function restaurar(version,boton){
+  if(!esAdmin(auth.currentUser)) return;
+  if(!confirm(`Se restaurarán ${version.total} actividades de la versión ${version.id} y se reemplazará el POA vigente. ¿Continuar?`)) return;
+  boton.disabled=true; estado.textContent="Verificando la versión…";
+  try{
+    const partes=await Promise.all(AREAS.map(area=>getDoc(doc(db,"importaciones",version.id,"poa",area))));
+    if(partes.some(parte=>!parte.exists())) throw new Error("La versión está incompleta; no se cambió el POA.");
+    const subidoEl=new Date().toISOString();
+    const nueva=`v${Date.now()}-${Math.random().toString(36).slice(2,10).padEnd(8,'0')}`;
+    const meta={generated:version.generated||"",total:version.total,
+      corrections:Array.isArray(version.corrections)?version.corrections:[],
+      subidoPor:auth.currentUser.email,subidoEl};
+    const lote=writeBatch(db);
+    AREAS.forEach((area,i)=>{
+      lote.set(doc(db,"poa",area),partes[i].data());
+      lote.set(doc(db,"importaciones",nueva,"poa",area),partes[i].data());
+    });
+    lote.set(doc(db,"meta","general"),meta);
+    lote.set(doc(db,"importaciones",nueva),meta);
+    await lote.commit();
+    estado.className="ok";
+    estado.textContent=`Versión ${version.id} restaurada. La nueva importación quedó guardada como ${nueva}.`;
+  }catch(error){
+    estado.className="error"; estado.textContent="No se pudo restaurar: "+(error.code||error.message);
+  }finally{boton.disabled=false;}
+}
+</script></body></html>

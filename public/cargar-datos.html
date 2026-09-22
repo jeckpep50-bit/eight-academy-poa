@@ -31,8 +31,7 @@ input[type=file]{width:100%;padding:14px;border:1px dashed #3b456a;border-radius
 </head><body>
 <div class="caja">
   <h1>Cargar los POA en Firestore</h1>
-  <p class="sub">Se hace <b>una sola vez</b>, y se repite solo cuando cambien los datos.
-     Sube <span style="font-family:'IBM Plex Mono',monospace">datos/datos.json</span> del repositorio.</p>
+  <p class="sub">Selecciona el archivo <b>datos.json</b> del proyecto. Cada carga conserva una versión recuperable en Firestore y actualiza el tablero de todos los usuarios.</p>
 
   <div class="paso pendiente" id="p1">
     <h2><span class="n">1</span> Identifícate como super administrador</h2>
@@ -51,14 +50,14 @@ input[type=file]{width:100%;padding:14px;border:1px dashed #3b456a;border-radius
   </div>
 
   <div id="log">Esperando…</div>
-  <p style="margin-top:16px"><a href="./index.html" style="color:#7ba2f5">← Volver al tablero</a></p>
+  <p style="margin-top:16px"><a href="./versiones.html" style="color:#7ba2f5">Ver versiones y restaurar</a> · <a href="./index.html" style="color:#7ba2f5">Volver al tablero</a></p>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, doc, writeBatch }
+import { getFirestore, doc, getDoc, writeBatch }
   from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { CONFIG, DOMINIO, SUPERADMINS, AREAS, CONFIGURADO } from "./config.js";
 
@@ -99,13 +98,18 @@ $("#archivo").addEventListener("change",async e=>{
   const f=e.target.files[0]; if(!f) return;
   try{
     datos=JSON.parse(await f.text());
-    const n=(datos.events||[]).length;
-    if(!n) throw new Error("el archivo no trae actividades");
-    di(`Leído: ${n} actividades, generado ${datos.generated||"sin fecha"}`,"ok");
+    if(!Array.isArray(datos.events) || !datos.events.length || !Array.isArray(datos.corrections)) {
+      throw new Error("el archivo debe incluir actividades y correcciones");
+    }
+    const n=datos.events.length;
+    di(`Leído: ${n} actividades y ${datos.corrections.length} correcciones, generado ${datos.generated||"sin fecha"}`,"ok");
     const porArea={}; datos.events.forEach(v=>{ (porArea[v.area]=porArea[v.area]||[]).push(v); });
     AREAS.forEach(a=>di(`   ${a.padEnd(13)} ${String((porArea[a]||[]).length).padStart(4)}`));
     const sueltas=Object.keys(porArea).filter(a=>!AREAS.includes(a));
-    if(sueltas.length) di("Áreas no reconocidas: "+sueltas.join(", "),"amb");
+    if(sueltas.length) throw new Error("Áreas no reconocidas: "+sueltas.join(", "));
+    if(datos.corrections.length>200 || AREAS.some(a=>(porArea[a]||[]).length>300)) {
+      throw new Error("El archivo supera los límites de seguridad de Firestore.");
+    }
     listo("#p3",true); $("#bSubir").disabled=false;
   }catch(err){ datos=null; di("No se pudo leer: "+err.message,"mal"); }
 });
@@ -116,14 +120,31 @@ $("#bSubir").addEventListener("click",async()=>{
   try{
     const porArea={}; AREAS.forEach(a=>porArea[a]=[]);
     datos.events.forEach(v=>{ if(porArea[v.area]) porArea[v.area].push(v); });
-    const lote=writeBatch(db);
-    AREAS.forEach(a=>lote.set(doc(db,"poa",a),{area:a,events:porArea[a],n:porArea[a].length}));
-    lote.set(doc(db,"meta","general"),{
+    const actual=await getDoc(doc(db,"meta","general"));
+    const areasActuales=await Promise.all(AREAS.map(a=>getDoc(doc(db,"poa",a))));
+    if((actual.exists() || areasActuales.some(s=>s.exists())) &&
+       !confirm("Ya hay datos en Firestore. Esta carga reemplazará el POA vigente y conservará la nueva versión en el historial. ¿Continuar?")){
+      $("#bSubir").disabled=false;
+      di("Carga cancelada. No se modificaron datos.","amb");
+      return;
+    }
+    const subidoEl=new Date().toISOString();
+    const version=`v${Date.now()}-${Math.random().toString(36).slice(2,10).padEnd(8,'0')}`;
+    const meta={
       generated: datos.generated||"", total: datos.events.length,
-      subidoPor: auth.currentUser.email, subidoEl: new Date().toISOString()
+      corrections: datos.corrections,
+      subidoPor: auth.currentUser.email, subidoEl
+    };
+    const lote=writeBatch(db);
+    AREAS.forEach(a=>{
+      const contenido={area:a,events:porArea[a],n:porArea[a].length};
+      lote.set(doc(db,"poa",a),contenido);
+      lote.set(doc(db,"importaciones",version,"poa",a),contenido);
     });
+    lote.set(doc(db,"meta","general"),meta);
+    lote.set(doc(db,"importaciones",version),meta);
     await lote.commit();
-    di(`Listo: ${AREAS.length} áreas + meta escritos. ${datos.events.length} actividades en Firestore.`,"ok");
+    di(`Listo: ${datos.events.length} actividades y ${datos.corrections.length} correcciones en Firestore. Versión ${version} conservada.`,"ok");
     di("Ya puedes abrir el tablero.","ok");
   }catch(err){
     $("#bSubir").disabled=false;

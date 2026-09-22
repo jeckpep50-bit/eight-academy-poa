@@ -1,6 +1,7 @@
 
 const D = window.__DATOS__;
 const IS_SUPERADMIN = window.__ES_SUPERADMIN__ === true;
+const GESTION = window.__GESTION__;
 /* ---------------- constantes ---------------- */
 const AREAS = ['KIDS','PRIMARIA','SECUNDARIA','DECE','MARKETING','RIESGOS','ZOOBOTANICA'];
 const ACADEMIC = ['KIDS','PRIMARIA','SECUNDARIA'];
@@ -46,15 +47,11 @@ const daysFromToday = iso => { if(!iso) return null; const t=new Date(); t.setHo
 
 let ROLE=IS_SUPERADMIN?'admin':'directivo', MY_AREA='KIDS', cShow=40, rShow=40;
 const hash = s => { let h=0; for(let i=0;i<s.length;i++) h=((h<<5)-h+s.charCodeAt(i))|0; return (h>>>0).toString(36); };
-const RK='ea_riesgos_revisados_v4';
-const getRev=()=>{try{return JSON.parse(localStorage.getItem(RK)||'{}')}catch(e){return{}}};
-const setRev=m=>{try{localStorage.setItem(RK,JSON.stringify(m))}catch(e){}};
+const getRev=()=>GESTION.estado.revisiones;
 
 /* clasificación de complejidad de gestión por actividad (adición, no forma parte
    del POA original): grande=+3 meses, mediana=2 meses, pequeña=1 mes o menos */
-const CK='ea_clasificacion_v1';
-const getClassMap=()=>{try{return JSON.parse(localStorage.getItem(CK)||'{}')}catch(e){return{}}};
-const setClassMap=m=>{try{localStorage.setItem(CK,JSON.stringify(m))}catch(e){}};
+const getClassMap=()=>GESTION.estado.clasificaciones;
 const CLASS_META={
   grande:  {stars:'★★★', label:'Grande · más de 3 meses'},
   mediana: {stars:'★★',  label:'Mediana · 2 meses'},
@@ -80,14 +77,12 @@ function refreshClassUI(){
   document.getElementById('dClassStars').textContent = c?CLASS_META[c].stars:'';
   document.getElementById('dClassLabel').textContent = c?CLASS_META[c].label:'Clasificación';
 }
-function setClass(c){
+async function setClass(c){
   if(!IS_SUPERADMIN) return;
   if(currentClassEventId==null) return;
-  const m=getClassMap();
-  if(m[currentClassEventId]===c){ delete m[currentClassEventId]; } else { m[currentClassEventId]=c; }
-  setClassMap(m);
-  refreshClassUI();
-  renderCal();
+  const clase = getClassMap()[currentClassEventId]===c ? 'ninguna' : c;
+  try { await GESTION.guardarClasificacion(currentClassEventId, clase); }
+  catch(error){ alert('No se pudo guardar la clasificación: '+(error.code||error.message)); }
 }
 
 const dated = D.events.filter(e=>e.start);
@@ -583,9 +578,10 @@ function renderRisks(){
     </div>`;
   }).join('') || '<p class="sub">Sin hallazgos con este filtro.</p>';
 }
-window.toggleRev = id => {
+window.toggleRev = async id => {
   if(!IS_SUPERADMIN) return;
-  const m=getRev(); m[id]=!m[id]; setRev(m); renderRisks(); renderAvance();
+  try { await GESTION.guardarRevision(id, !getRev()[id]); }
+  catch(error){ alert('No se pudo guardar la revisión: '+(error.code||error.message)); }
 };
 function renderAlerts(){
   const ar=document.getElementById('aArea').value, w=document.getElementById('aWin').value;
@@ -744,9 +740,10 @@ function wire(){
   document.getElementById('cMore').addEventListener('click',()=>{cShow+=40;renderConflicts()});
   document.getElementById('rPrio').addEventListener('change',()=>{rShow=40;renderRisks()});
   document.getElementById('rMore').addEventListener('click',()=>{rShow+=40;renderRisks()});
-  document.getElementById('rReset').addEventListener('click',()=>{
+  document.getElementById('rReset').addEventListener('click',async()=>{
     if(!IS_SUPERADMIN) return;
-    setRev({});renderRisks();renderAvance();
+    try { await GESTION.restablecerRevisiones(); }
+    catch(error){ alert('No se pudieron restablecer las revisiones: '+(error.code||error.message)); }
   });
   document.getElementById('aArea').addEventListener('change',renderAlerts);
   document.getElementById('aWin').addEventListener('change',renderAlerts);
@@ -938,7 +935,7 @@ function renderAvance(){
     `<span class="atv">${hechos} de ${RISKS.length} · ${pct}%</span></div>`+
     `<div class="track"><div class="fill" style="width:${pct}%"></div></div>`+
     `<div class="hint">${criticosPend? `Quedan ${criticosPend} hallazgos críticos sin revisar.` : 'Todos los hallazgos críticos están revisados.'} `+
-    `El avance se guarda en este navegador.</div>`;
+    `El avance se sincroniza entre administradores.</div>`;
 }
 
 /* ---------- 5 · días del calendario con conflicto crítico ---------- */
@@ -1090,6 +1087,15 @@ function init(){
     renderRisks(); renderCorr(); renderQuality();
     // applyRole() ya dispara renderCal() y renderAlerts(): no se repetían aquí
     applyRole(IS_SUPERADMIN?'admin':'directivo'); initScrollSpy(); initTactil();
+    GESTION.suscribir(estado => {
+      if(estado.error){
+        const aviso=document.getElementById('rSub');
+        if(aviso) aviso.textContent='No se pudo sincronizar el estado compartido: '+(estado.error.code||estado.error.message);
+        return;
+      }
+      renderRisks(); renderAvance(); renderCal();
+      if(currentClassEventId!==null) refreshClassUI();
+    });
   }catch(err){
     document.querySelector('main').insertAdjacentHTML('afterbegin',
       `<section class="errbox"><h2>Error al cargar el tablero</h2><p class="sub">${esc(err.message)}</p></section>`);

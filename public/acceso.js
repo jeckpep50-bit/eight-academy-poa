@@ -10,8 +10,9 @@ import {
   GoogleAuthProvider, signInWithPopup,
   sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { CONFIG, DOMINIO, SUPERADMINS, AREAS, CONFIGURADO } from "./config.js";
+import { iniciarGestion } from "./gestion.js";
 
 const $ = s => document.querySelector(s);
 const puerta = $("#puerta");
@@ -89,6 +90,7 @@ if(isSignInWithEmailLink(auth, location.href)){
 
 /* ---------- el portero ---------- */
 let dentro = false;
+let escuchandoImportaciones = false;
 onAuthStateChanged(auth, async usuario => {
   if(!usuario){ puerta.classList.remove("fuera"); bloquear(false); return; }
 
@@ -101,12 +103,29 @@ onAuthStateChanged(auth, async usuario => {
   }
   if(dentro) return;
   dentro = true;
+  if(!escuchandoImportaciones){
+    escuchandoImportaciones = true;
+    let primeraLectura = true;
+    let versionActual = null;
+    onSnapshot(doc(db, "meta", "general"), snap => {
+      const version = snap.exists() ? snap.data().subidoEl || "" : "";
+      if(primeraLectura){ versionActual = version; primeraLectura = false; return; }
+      if(version !== versionActual) location.reload();
+    }, error => console.error("No se pudo observar la importación", error));
+  }
   decir("Cargando el tablero…", "bien");
   try {
     await cargarTablero(usuario);
   } catch(e){
     dentro = false; bloquear(false);
     decir("Entraste, pero no se pudieron leer los datos: " + (e.code || e.message), "mal");
+    if(e.message && e.message.includes("Firestore está vacío") && esAdmin(usuario.email)){
+      const enlace=document.createElement("a");
+      enlace.href="./cargar-datos.html";
+      enlace.textContent="Abrir la carga de datos";
+      enlace.style.display="block";
+      aviso.appendChild(enlace);
+    }
     console.error(e);
   }
 });
@@ -117,7 +136,7 @@ async function cargarTablero(usuario){
   const faltan = AREAS.filter((a,i) => !partes[i].exists());
   if(faltan.length === AREAS.length){
     throw new Error(esAdmin(usuario.email)
-      ? "Firestore está vacío. Sube los datos una vez con herramientas/cargar-datos.html"
+      ? "Firestore está vacío. Sube los datos una vez en /cargar-datos.html"
       : "Todavía no hay datos cargados. Avisa a un administrador.");
   }
 
@@ -126,10 +145,15 @@ async function cargarTablero(usuario){
   eventos.sort((a,b) => a.id - b.id);
 
   const meta = await getDoc(doc(db, "meta", "general"));
-  window.__DATOS__ = { generated: meta.exists() ? meta.data().generated : "", events: eventos };
+  window.__DATOS__ = {
+    generated: meta.exists() ? meta.data().generated : "",
+    corrections: meta.exists() && Array.isArray(meta.data().corrections) ? meta.data().corrections : [],
+    events: eventos
+  };
 
   const admin = esAdmin(usuario.email);
   window.__ES_SUPERADMIN__ = admin;
+  window.__GESTION__ = iniciarGestion(db, usuario, admin);
   identidad(usuario, admin);
   puerta.classList.add("fuera");
   document.body.classList.remove("sin-entrar");
