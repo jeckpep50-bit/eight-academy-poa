@@ -114,6 +114,12 @@ onAuthStateChanged(auth, async usuario => {
     }, error => console.error("No se pudo observar la importación", error));
   }
   decir("Cargando el tablero…", "bien");
+  // El archivo del tablero puede descargarse mientras Firestore entrega los POA.
+  const precarga = document.createElement("link");
+  precarga.rel = "preload";
+  precarga.as = "script";
+  precarga.href = "./tablero.js";
+  document.head.appendChild(precarga);
   try {
     await cargarTablero(usuario);
   } catch(e){
@@ -132,7 +138,12 @@ onAuthStateChanged(auth, async usuario => {
 
 /* ---------- traer los datos y arrancar el tablero ---------- */
 async function cargarTablero(usuario){
-  const partes = await Promise.all(AREAS.map(a => getDoc(doc(db, "poa", a))));
+  const inicioLectura = performance.now();
+  const [partes, meta] = await Promise.all([
+    Promise.all(AREAS.map(a => getDoc(doc(db, "poa", a)))),
+    getDoc(doc(db, "meta", "general"))
+  ]);
+  console.info(`POA: lectura de Firestore en ${Math.round(performance.now() - inicioLectura)} ms`);
   const faltan = AREAS.filter((a,i) => !partes[i].exists());
   if(faltan.length === AREAS.length){
     throw new Error(esAdmin(usuario.email)
@@ -149,7 +160,6 @@ async function cargarTablero(usuario){
   }
   eventos.sort((a,b) => a.id - b.id);
 
-  const meta = await getDoc(doc(db, "meta", "general"));
   window.__DATOS__ = {
     generated: meta.exists() ? meta.data().generated : "",
     corrections: meta.exists() && Array.isArray(meta.data().corrections) ? meta.data().corrections : [],

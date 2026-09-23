@@ -1072,6 +1072,7 @@ function initTactil(){
   sincronizarMstep();
 }
 function init(){
+  const inicioRender = performance.now();
   try{
     HOL=buildHolidayIndex();
     FAMS=computeFamilies();
@@ -1096,6 +1097,7 @@ function init(){
       renderRisks(); renderAvance(); renderCal();
       if(currentClassEventId!==null) refreshClassUI();
     });
+    console.info(`POA: cálculo y presentación en ${Math.round(performance.now() - inicioRender)} ms`);
   }catch(err){
     document.querySelector('main').insertAdjacentHTML('afterbegin',
       `<section class="errbox"><h2>Error al cargar el tablero</h2><p class="sub">${esc(err.message)}</p></section>`);
