@@ -134,6 +134,30 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Registro inmutable de cada edición y aprobación de documentos.
+    match /ediciones/{edicion} {
+      allow read: if esAdmin();
+      allow create: if esAdmin()
+          && request.resource.data.keys().hasOnly([
+               'actor', 'fecha', 'version', 'tipo', 'etiqueta', 'cambios'
+             ])
+          && request.resource.data.keys().hasAll([
+               'actor', 'fecha', 'version', 'tipo', 'etiqueta', 'cambios'
+             ])
+          && request.resource.data.actor is string
+          && request.resource.data.actor.lower() == request.auth.token.email.lower()
+          && request.resource.data.fecha is timestamp
+          && request.resource.data.version is string
+          && request.resource.data.version.size() <= 40
+          && request.resource.data.tipo in ['edicion','importacion']
+          && request.resource.data.etiqueta is string
+          && request.resource.data.etiqueta.size() <= 150
+          && request.resource.data.cambios is list
+          && request.resource.data.cambios.size() > 0
+          && request.resource.data.cambios.size() <= 200;
+      allow update, delete: if false;
+    }
+
     // Todo lo que no esté declarado arriba queda cerrado.
     match /{documento=**} {
       allow read, write: if false;

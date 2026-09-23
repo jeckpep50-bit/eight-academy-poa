@@ -163,7 +163,7 @@ async function cargarTablero(usuario){
   window.__DATOS__ = {
     generated: meta.exists() ? meta.data().generated : "",
     corrections: meta.exists() && Array.isArray(meta.data().corrections) ? meta.data().corrections : [],
-    events: eventos
+    events: eventos.filter(e => e.archivado !== true)
   };
 
   const admin = esAdmin(usuario.email);
@@ -196,6 +196,13 @@ function identidad(usuario, admin){
   salir.id = "bSalir";
   salir.textContent = "Salir";
   barra.append(correo, rol, salir);
+  if(admin){
+    const editar=document.createElement("a");
+    editar.href="./editar-poa.html";
+    editar.textContent="Editar e importar POA";
+    editar.style.cssText="color:#f5d04e;font-weight:700;padding:7px 9px";
+    barra.insertBefore(editar,salir);
+  }
 
   const destino = document.querySelector(".role-bar") || document.querySelector("header.top");
   if(destino) destino.appendChild(barra);

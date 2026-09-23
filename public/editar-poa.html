@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Editar e importar POA · Eight Academy</title>
+<style>
+:root{font:16px/1.45 system-ui,"Segoe UI",sans-serif;color:#202840;background:#f5f7fc}
+*{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button{cursor:pointer}
+header{background:#151d47;color:#fff;padding:21px max(20px,4vw);display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+h1{font-size:24px;margin:0}.sub{color:#c7d0ef;margin:3px 0 0;font-size:14px}a{color:inherit}header a{color:#f5d04e}
+main{max-width:1500px;margin:auto;padding:22px max(16px,3vw) 60px}
+.message{padding:11px 15px;border-radius:10px;background:#e7ebf8;margin-bottom:18px}.message.error{background:#ffe8e7;color:#912b28}.message.ok{background:#e4f6e9;color:#165f34}
+.tabs{display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap}.tabs button,.ghost{border:1px solid #bdc9df;background:#fff;color:#273568;border-radius:9px;padding:10px 15px;font-weight:650}
+.tabs button[aria-selected=true],.primary{background:#263781;color:white;border:1px solid #263781;border-radius:9px;padding:10px 16px;font-weight:700}
+.danger{background:#fff3f0;color:#a33b27;border:1px solid #d9a79d;border-radius:9px;padding:10px 15px;font-weight:650}
+.panel{background:#fff;border:1px solid #dce2ee;border-radius:14px;padding:20px;box-shadow:0 3px 15px #1f2b5310}
+.layout{display:grid;grid-template-columns:minmax(280px,390px) minmax(0,1fr);gap:16px}.list{max-height:75vh;overflow:auto;padding:0}.list-top{padding:16px;border-bottom:1px solid #e4e8f1;position:sticky;top:0;background:white;z-index:1}
+.list-top input,.list-top select{width:100%;margin-top:7px}.list-top label{display:flex;align-items:center;gap:7px;margin-top:8px}.list-top label input{width:auto;margin:0}.activity{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #e8ebf3;background:white;padding:12px 16px;color:#222b47}.activity:hover,.activity.active{background:#edf1ff}.activity small{display:block;color:#66718d;margin-top:3px}.activity.archived{opacity:.65}.star{color:#a45d00}
+h2{font-size:20px;margin:0 0 7px}h3{font-size:16px;margin:22px 0 10px}.hint{color:#5b6680;font-size:14px;margin:0 0 16px}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.wide{grid-column:1/-1}
+label{display:block;font-weight:650;font-size:14px;color:#34405f}input,select,textarea{border:1px solid #b9c5dc;border-radius:8px;padding:10px 11px;background:white;color:#202840;max-width:100%}label>input,label>select,label>textarea{display:block;width:100%;margin-top:5px}textarea{min-height:76px;resize:vertical}.checks{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}.checks label{display:flex;gap:7px;align-items:center}.checks input{display:inline;width:auto;margin:0}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}button:disabled{opacity:.48;cursor:not-allowed}
+.import-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.import-grid input,.import-grid select{width:100%}.mapping{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:15px 0}.mapping select{width:100%}
+.table-wrap{overflow:auto;max-height:57vh;border:1px solid #dce2ee;border-radius:9px}table{border-collapse:collapse;width:100%;min-width:950px}th,td{border-bottom:1px solid #e4e8f0;padding:7px;vertical-align:top}th{position:sticky;top:0;background:#e8ecf7;text-align:left}td input,td select{width:100%;min-width:90px;font-size:13px;padding:7px}td:nth-child(3) input{min-width:240px}td:nth-child(1){color:#66718d;font-size:12px}.preview-summary{font-weight:650;margin:16px 0 8px}
+details{margin-top:18px;color:#52607d}details pre{white-space:pre-wrap;max-height:250px;overflow:auto;background:#f0f3fa;padding:12px}
+[hidden]{display:none!important}@media(max-width:900px){.layout{grid-template-columns:1fr}.list{max-height:280px}.import-grid,.mapping{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.form-grid,.import-grid,.mapping{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div><h1>Actividades y documentos del POA</h1><p class="sub">Edición sincronizada · solo super administradores</p></div><div><span id="who"></span> · <a href="./index.html">Volver al tablero</a> · <a href="./versiones.html">Versiones</a></div></header>
+<main>
+<div id="message" class="message" role="status">Comprobando acceso…</div>
+<div id="app" hidden>
+  <div class="tabs" role="tablist"><button id="tabActivities" role="tab" aria-selected="true" type="button">Actividades</button><button id="tabImport" role="tab" aria-selected="false" type="button">Importar documento</button></div>
+  <section id="activities" class="layout">
+    <div class="panel list"><div class="list-top"><button id="newActivity" class="primary" type="button">+ Nueva actividad</button><input id="search" type="search" placeholder="Buscar actividad o responsable" aria-label="Buscar"><select id="filterArea" aria-label="Filtrar por área"><option value="">Todas las áreas</option></select><label><input id="showArchived" type="checkbox"> Incluir archivadas</label><small id="listCount"></small></div><div id="activityList"></div></div>
+    <div class="panel"><h2 id="formTitle">Nueva actividad</h2><p class="hint" id="formHint">Completa la actividad y sus fechas. Al guardar, se actualizarán los tableros abiertos.</p>
+      <form id="eventForm"><div class="form-grid">
+        <label class="wide">Actividad *<input name="activity" maxlength="250" required></label>
+        <label>Área *<select name="area" required></select></label>
+        <label>Responsable<input name="responsable" maxlength="180"></label>
+        <label>Inicio<input name="start" type="date"></label>
+        <label>Fin<input name="end" type="date"></label>
+        <label>Público<input name="publico" maxlength="180"></label>
+        <label>Objetivo<input name="objetivo" maxlength="180"></label>
+        <label>Unidad / pilar<input name="unidad" maxlength="180"></label>
+        <label>Período<input name="periodo" maxlength="100"></label>
+        <label>Prioridad<select name="prioridad"><option value="">Sin definir</option><option>Alta</option><option>Media</option><option>Baja</option></select></label>
+        <label>Estado<input name="estado" list="estados" maxlength="100"><datalist id="estados"><option value="Planificado"><option value="Confirmada"><option value="Ventana definida"><option value="Iniciado"><option value="En curso"><option value="Cumplido"><option value="Completado"><option value="Pendiente"></datalist></label>
+        <label>Planificación pormenorizada<select name="planning"><option value="VALIDAR">Por validar</option><option value="SÍ">Sí · alerta 15 días antes</option></select></label>
+        <label class="wide">Notas<textarea name="notas" maxlength="1500"></textarea></label>
+      </div><div class="checks"><label><input name="recurrente" type="checkbox"> Recurrente</label><label><input name="destacado" type="checkbox"> Destacar en el tablero</label></div>
+      <div class="actions"><button class="primary" id="saveActivity" type="submit">Guardar actividad</button><button class="ghost" id="addDate" type="button" hidden>Añadir otra fecha</button><button class="danger" id="archiveActivity" type="button" hidden>Archivar actividad</button><button class="ghost" id="restoreActivity" type="button" hidden>Restaurar actividad</button></div></form>
+    </div>
+  </section>
+  <section id="importPanel" class="panel" hidden><h2>Importar documento</h2><p class="hint">El archivo se lee aquí, en tu navegador. No se envía ni conserva el original. Revisa cada propuesta antes de aprobarla.</p>
+    <div class="import-grid"><label>Archivo<input id="file" type="file" accept=".xlsx,.csv,.tsv,.docx,.pptx,.pdf,.txt"></label><label>Área predeterminada<select id="defaultArea"></select></label><label>Tabla u hoja<select id="sheet"><option value="">Texto extraído</option></select></label></div>
+    <p class="hint">Excel (.xlsx/.csv/.tsv), Word (.docx), PowerPoint (.pptx), PDF con texto y .txt. Los formatos Office antiguos o iWork deben exportarse a uno de estos formatos.</p>
+    <div id="mappingPanel" hidden><h3>Relacionar columnas</h3><div class="import-grid"><label>Fila de encabezados<select id="headerRow"></select></label></div><div id="mapping" class="mapping"></div><button id="prepareRows" class="ghost" type="button">Preparar vista previa</button></div>
+    <div id="previewPanel" hidden><h3>Vista previa de cambios</h3><p class="hint">«Actualizar» solo se propone cuando coincide exactamente el nombre y el área con una actividad vigente. Corrige fechas y datos antes de aprobar.</p><div id="previewSummary" class="preview-summary"></div><div class="table-wrap"><table><thead><tr><th>Origen</th><th>Acción</th><th>Actividad</th><th>Área</th><th>Inicio</th><th>Fin</th><th>Responsable</th></tr></thead><tbody id="previewBody"></tbody></table></div><div class="actions"><button id="addPreviewRow" class="ghost" type="button">+ Añadir fila manual</button><button id="approveImport" class="primary" type="button">Aprobar cambios seleccionados</button></div></div>
+    <details id="extracted" hidden><summary>Ver texto extraído para contrastar</summary><pre id="extractedText"></pre></details>
+  </section>
+</div>
+</main>
+<script type="module" src="./editar-poa.mjs"></script>
+</body></html>

@@ -29,8 +29,9 @@ public/            ← lo único que Netlify publica
   tablero.js         el programa (sin datos)
   acceso.js          identidad, dominio, carga de datos
   config.js          configuración de Firebase y lista de administradores
-  cargar-datos.html  importación con versión recuperable
-  versiones.html     listado y restauración de importaciones
+  editar-poa.html    edición y aprobación de documentos para super administradores
+  cargar-datos.html  reemplazo completo desde JSON, solo para mantenimiento
+  versiones.html     listado y restauración de importaciones; cambios recientes
   gestion.js         sincronización en tiempo real de revisiones y clasificaciones
 datos/             ← NO se sube al repositorio (.gitignore)
   datos.json         las 764 actividades
@@ -109,6 +110,35 @@ La recuperación point-in-time (PITR) de Firestore requiere una cuenta de
 facturación vinculada y tiene costo de almacenamiento adicional. Las versiones
 de importación descritas arriba funcionan sin PITR, aunque no reemplazan la
 recuperación de todos los cambios de la base a un minuto específico.
+
+### Editar e importar nuevos documentos
+
+El enlace **Editar e importar POA** aparece en el tablero para los tres super
+administradores. Allí pueden añadir o editar actividades y fechas, crear otra
+fecha sin borrar la primera, destacarlas, archivarlas y restaurarlas. El
+archivado conserva la actividad en Firestore y la quita del tablero. Cada
+modificación queda registrada de forma inmutable en `ediciones`; los demás
+navegadores actualizan el tablero cuando cambia la versión del POA.
+
+La pestaña **Importar documento** admite XLSX, CSV, TSV, DOCX, PPTX, PDF con
+texto seleccionable y TXT. Las tablas permiten elegir encabezado y asociar
+columnas; el texto con fechas completas genera propuestas que pueden editarse.
+El super administrador revisa las acciones **Añadir / Actualizar / Omitir** y
+aprueba antes de escribir. Una coincidencia para actualizar requiere el mismo
+nombre y área; no se hacen sustituciones aproximadas. Se guardan versiones del
+POA antes y después de cada importación aprobada, recuperables en
+`versiones.html`.
+
+Los archivos se procesan localmente en el navegador: **no se guarda una copia
+del original**. Solo las actividades aprobadas y el nombre del archivo de
+procedencia llegan a Firestore. Para documentos escaneados, formatos Office
+antiguos (`.xls`, `.doc`, `.ppt`) o iWork, conviértelos a un formato admitido;
+si el texto no tiene fechas completas, introduce o corrige las filas en la
+vista previa. El límite por archivo es 20 MB y por aprobación 200 actividades.
+
+Para modificar el lector de documentos: `npm ci`, `npm run build` y `npm test`.
+El bundle generado dentro de `public/` se incluye en Git porque Netlify
+publica esa carpeta sin ejecutar una compilación.
 
 ---
 

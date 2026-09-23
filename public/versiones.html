@@ -14,21 +14,22 @@ button:disabled{opacity:.5;cursor:not-allowed}.error{color:#f0907e}.ok{color:#7d
 <p>Las importaciones quedan guardadas aquí. Solo los super administradores pueden consultar y restaurar una versión. La restauración se reflejará en los tableros abiertos.</p>
 <p id="estado" role="status">Comprobando acceso…</p>
 <ul id="lista"></ul>
-<p><a href="./cargar-datos.html">Cargar otra versión</a> · <a href="./index.html">Volver al tablero</a></p>
+<h2>Cambios recientes</h2><ul id="ediciones"></ul>
+<p><a href="./editar-poa.html">Editar o importar documento</a> · <a href="./cargar-datos.html">Cargar JSON completo</a> · <a href="./index.html">Volver al tablero</a></p>
 </main>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, collection, getDocs, getDoc, doc, writeBatch }
+import { getFirestore, collection, getDocs, getDoc, doc, writeBatch, query, orderBy, limit }
   from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { CONFIG, SUPERADMINS, AREAS } from "./config.js";
 
 const app=initializeApp(CONFIG), auth=getAuth(app), db=getFirestore(app);
-const estado=document.getElementById("estado"), lista=document.getElementById("lista");
+const estado=document.getElementById("estado"), lista=document.getElementById("lista"), ediciones=document.getElementById("ediciones");
 const esAdmin=u=>u && u.emailVerified && SUPERADMINS.includes((u.email||"").toLowerCase());
 
 onAuthStateChanged(auth,async usuario=>{
-  lista.replaceChildren();
+  lista.replaceChildren(); ediciones.replaceChildren();
   if(!esAdmin(usuario)){
     estado.textContent="Entra al tablero con una cuenta de super administrador para consultar las versiones.";
     return;
@@ -42,13 +43,22 @@ onAuthStateChanged(auth,async usuario=>{
     for(const version of versiones){
       const fila=document.createElement("li"), info=document.createElement("div");
       const titulo=document.createElement("strong"), detalle=document.createElement("small");
-      titulo.textContent=`${version.total} actividades · POA ${version.generated||"sin fecha"}`;
+      titulo.textContent=`${version.id.endsWith('-antes')?'Respaldo previo · ':''}${version.total} actividades · POA ${version.generated||"sin fecha"}`;
       detalle.textContent=`Importado ${version.subidoEl||""} por ${version.subidoPor||""} · ${version.id}`;
       info.append(titulo,detalle);
       const boton=document.createElement("button");
       boton.type="button"; boton.textContent="Restaurar";
       boton.addEventListener("click",()=>restaurar(version,boton));
       fila.append(info,boton); lista.appendChild(fila);
+    }
+    const recientes=await getDocs(query(collection(db,"ediciones"),orderBy("fecha","desc"),limit(40)));
+    if(recientes.empty)ediciones.appendChild(Object.assign(document.createElement("li"),{textContent:"Aún no hay ediciones registradas."}));
+    for(const cambio of recientes.docs){
+      const dato=cambio.data(), fila=document.createElement("li"), texto=document.createElement("div");
+      const titulo=document.createElement("strong"), detalle=document.createElement("small");
+      titulo.textContent=`${dato.tipo==="importacion"?"Importación":"Edición"} · ${(dato.cambios||[]).length} actividad(es)`;
+      detalle.textContent=`${dato.etiqueta||""} · ${dato.actor||""} · ${dato.fecha?.toDate?.().toLocaleString("es-EC")||""}`;
+      texto.append(titulo,detalle);fila.append(texto);ediciones.append(fila);
     }
   }catch(error){estado.className="error";estado.textContent="No se pudieron leer las versiones: "+(error.code||error.message);}
 });

@@ -102,6 +102,8 @@ function evRows(e){
   const badge = areaTag(e.area,{lg:true});
   return [
     ['Área', badge],
+    ['Destacada', e.destacado ? '★ Actividad destacada' : ''],
+    ['Editar', IS_SUPERADMIN ? `<a href="./editar-poa.html?id=${e.id}">Editar esta actividad</a>` : ''],
     ['Fechas', e.start ? (e.start===e.end?fmt(e.start):`${fmt(e.start)} – ${fmt(e.end)}`) : 'Sin fecha declarada'],
     ['Estado de la fecha', `${esc(e.dateStatus)}${e.dateNote?` · ${esc(e.dateNote)}`:''}`],
     ['Responsable', e.responsable ? `${esc(e.responsable)}<br><span class="trace">${esc(e.responsableFuente||'')}</span>` : '<i>No especificado en el POA</i>'],
@@ -462,7 +464,7 @@ function evHTML(e,mini){
   const lblc = cId&&CLASS_META[cId] ? `, ${CLASS_META[cId].label}` : '';
   return `<div class="${cls}${inf} ${meta(e.area).cls}" ${activable(`showEv(${e.id})`)} `+
     `aria-label="${esc(lbl+lblc)}" title="${esc(lbl+lblc)}">` +
-    `<b class="evtk" aria-hidden="true">${meta(e.area).mono}</b>${esc(e.activity)}${classBadge(e.id)}</div>`;
+    `<b class="evtk" aria-hidden="true">${meta(e.area).mono}</b>${e.destacado?'★ ':''}${esc(e.activity)}${classBadge(e.id)}</div>`;
 }
 window.showEv = id => { const e=D.events.find(x=>x.id===id); if(e){ openDetail(e.activity, evRows(e)); currentClassEventId=id; document.getElementById('dClassBtn').classList.remove('hidden'); refreshClassUI(); } };
 function monthGrid(evs,y,m,mini){
@@ -523,23 +525,6 @@ window.showFam = k => {
   openDetail(f.name, [['Estado',statePill(f.cls, sinEmoji(f.status))],
     ...f.all.map(e=>[meta(e.area).label, `${esc(e.activity)}<br><span class="mono">${fmt(e.start)}${e.start!==e.end?' – '+fmt(e.end):''}</span><br><span class="trace">${esc(e.sourceFile)} · fila ${esc(e.sourceRow)}</span>`])]);
 };
-function renderLoads(){
-  const W=900,H=76,PL=28,PB=14;
-  const max=Math.max(...LOADS.map(l=>l.n),1);
-  document.getElementById('loadChart').innerHTML = AREAS.map(a=>{
-    const s=LOADS.filter(l=>l.area===a).sort((x,y)=>x.week.localeCompare(y.week));
-    if(!s.length) return '';
-    const bw=(W-PL)/s.length;
-    const bars=s.map((l,i)=>{
-      const h=(l.n/max)*(H-PB-6), x=PL+i*bw+1, y=H-PB-h;
-      return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${Math.max(bw-2,1).toFixed(1)}" height="${Math.max(h,1).toFixed(1)}" rx="2" fill="var(--c)"><title>${meta(a).label} · ${l.week} · ${l.n} actividades · ${loadLevel(l.n).label}</title></rect>`;
-    }).join('');
-    const mx=Math.max(...s.map(x=>x.n));
-    return `<div class="${meta(a).cls} barblock">
-      <div class="barhead">${areaTag(a)}<span class="barmeta">${s.length} semanas con actividad · pico de ${mx} act./semana</span>${statePill(loadLevel(mx).cls, loadLevel(mx).label)}</div>
-      <svg viewBox="0 0 ${W} ${H}" style="height:${H}px"><line x1="${PL}" y1="${H-PB}" x2="${W}" y2="${H-PB}" stroke="var(--line)"/><text x="2" y="${H-PB+4}" font-size="9" fill="var(--ink-3)" font-family="IBM Plex Mono">0</text><text x="2" y="10" font-size="9" fill="var(--ink-3)" font-family="IBM Plex Mono">${max}</text>${bars}</svg></div>`;
-  }).join('');
-}
 function renderConflicts(){
   const sev=document.getElementById('cSev').value, ar=document.getElementById('cArea').value;
   const rows=CONF.filter(c=>(sev==='ALL'||c.sev===sev)&&(ar==='ALL'||c.a.area===ar||c.b.area===ar));
