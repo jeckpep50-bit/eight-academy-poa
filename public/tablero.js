@@ -598,22 +598,6 @@ function renderAlerts(){
       <td>${esc(e.responsable||'—')}</td></tr>`;
   }).join('') || '<tr><td colspan="6" class="muted">Sin alertas con este filtro.</td></tr>';
 }
-function renderQuality(){
-  const withResp=D.events.filter(e=>e.responsable).length;
-  const inferred=D.events.filter(e=>e.responsableFuente&&e.responsableFuente.startsWith('Inferido')).length;
-  const checks=[
-    ['Actividades con fecha ubicable', dated.length===D.events.length, `${dated.length}/${D.events.length}`],
-    ['Actividades con responsable', withResp===D.events.length, `${withResp}/${D.events.length} (${inferred} inferidos)`],
-    ['Fechas corregidas y trazadas', true, `${D.corrections.filter(c=>c.kind.startsWith('Fecha')||c.kind.startsWith('Año')).length} correcciones`],
-    ['Términos normalizados a «trimestre»', true, `${D.corrections.filter(c=>c.kind.indexOf('Trimestre')>=0).length} celdas`],
-    ['Terminología navideña unificada', true, `${D.corrections.filter(c=>c.kind.indexOf('navideña')>=0).length} actividades`],
-    ['Fechas pendientes de validación', dated.filter(e=>e.dateStatus==='REVISAR').length===0, `${dated.filter(e=>e.dateStatus==='REVISAR').length}`],
-    ['Actividades recuperadas de otra hoja', true, `${D.events.filter(e=>e.dateStatus==='COMPLEMENTARIA').length} de Primaria`],
-    ['Semanas en sobrecarga (7+)', LOADS.filter(l=>l.n>=7).length===0, `${LOADS.filter(l=>l.n>=7).length}`],
-  ];
-  document.getElementById('quality').innerHTML = checks.map(([l,ok,d])=>`<div class="qrow"><span>${esc(l)}</span><span class="badge ${ok?'b':'m'}">${ok?'OK':'REVISAR'} · ${esc(d)}</span></div>`).join('');
-}
-
 /* ---------------- ICS ---------------- */
 /* RFC 5545 §3.3.11: en un valor TEXT, la barra, el punto y coma, la coma y el salto
    de línea son separadores y deben escaparse, o el título se corta en la primera coma. */
@@ -1076,7 +1060,7 @@ function init(){
     selMes.value=[...selMes.options].some(o=>o.value===MES_HOY) ? MES_HOY : '2026-09';
     renderHeroKpis(); renderKpis(); renderAhora(); renderHeat(); renderAvance(); renderAreaTiles(); renderSem();
     renderFamilies(); renderLoads(); renderConflicts();
-    renderRisks(); renderQuality();
+    renderRisks();
     // applyRole() ya dispara renderCal() y renderAlerts(): no se repetían aquí
     applyRole(IS_SUPERADMIN?'admin':'directivo'); initScrollSpy(); initTactil();
     GESTION.suscribir(estado => {

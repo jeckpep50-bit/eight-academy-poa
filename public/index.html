@@ -354,9 +354,6 @@ tr.clickable:hover td{background:var(--accent-soft)}
 .finding .actions{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
 @media(max-width:700px){ .finding-grid .fr{grid-template-columns:1fr;gap:3px} }
 
-.quality-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
-.qrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;
-  border:1px solid var(--line);border-radius:11px;background:var(--surface-2);font-size:14.5px}
 
 .bars svg{width:100%;display:block}
 .barhead{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
@@ -740,9 +737,7 @@ dialog .db{max-height:min(62vh,560px);overflow:auto}
   <a href="#s6"><span class="nn">06</span>Conflictos</a>
   <a href="#s7"><span class="nn">07</span>Matriz de riesgos</a>
   <a href="#s8"><span class="nn">08</span>Alertas 15 días</a>
-  <a href="#s9"><span class="nn">09</span>Exportar</a>
-  <a href="#s10" class="admin-only"><span class="nn">10</span>Calidad de datos</a>
-</nav>
+  <a href="#s9"><span class="nn">09</span>Exportar</a></nav>
 
 <main>
 
@@ -884,11 +879,6 @@ dialog .db{max-height:min(62vh,560px);overflow:auto}
     <li>Elige el archivo y el calendario de destino, y confirma.</li>
     <li>Cada actividad con prioridad alta lleva una alarma 15 días antes con el recordatorio de planificación.</li>
   </ol>
-</section>
-
-<section id="s10" class="admin-only">
-  <div class="shead"><div class="snum">10</div><div><h2>Auditoría de calidad de datos</h2><p class="spurpose">Verificaciones calculadas en vivo sobre las 7 fuentes.</p></div></div>
-  <div class="quality-grid" id="quality"></div>
 </section>
 
 </main>

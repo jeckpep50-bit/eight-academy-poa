@@ -130,7 +130,6 @@ async function cargarTablero(usuario){
 
   window.__DATOS__ = {
     generated: meta.exists() ? meta.data().generated : "",
-    corrections: meta.exists() && Array.isArray(meta.data().corrections) ? meta.data().corrections : [],
     events: eventos.filter(e => e.archivado !== true)
   };
 
