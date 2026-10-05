@@ -247,12 +247,34 @@ function computeConflicts(){
 }
 
 /* ---------------- carga semanal ---------------- */
-function isoWeek(d){
-  const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
-  const dn=(t.getUTCDay()+6)%7; t.setUTCDate(t.getUTCDate()-dn+3);
-  const ft=new Date(Date.UTC(t.getUTCFullYear(),0,4));
-  const w=1+Math.round(((t-ft)/86400000-3+((ft.getUTCDay()+6)%7))/7);
-  return `${t.getUTCFullYear()}-W${String(w).padStart(2,'0')}`;
+/* Semana lectiva: la semana 1 empieza el lunes de la semana que contiene el
+   1 de septiembre. Clave "AAAA-Wnn", con AAAA = año en que arranca el año lectivo. */
+function lunesInicioLectivo(anio){
+  const d=new Date(Date.UTC(anio,8,1));
+  d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);
+  return d;
+}
+function semanaLectiva(d){
+  const t=Date.UTC(d.getFullYear(),d.getMonth(),d.getDate());
+  let anio=d.getFullYear();
+  if(t<lunesInicioLectivo(anio).getTime()) anio--;
+  const w=1+Math.floor((t-lunesInicioLectivo(anio).getTime())/(7*86400000));
+  return `${anio}-W${String(w).padStart(2,'0')}`;
+}
+function lunesDeSemana(clave){
+  const [anio,w]=clave.split('-W').map(Number);
+  const d=lunesInicioLectivo(anio);
+  return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+(w-1)*7);
+}
+// Lo anterior al lunes de inicio (capacitación, planificación de agosto) es "previa".
+let anioLectivo;
+function nombreSemana(clave){
+  if(anioLectivo===undefined){
+    const fechas=dated.map(e=>e.start).sort();
+    anioLectivo=Number(semanaLectiva(parseISO(fechas[fechas.length>>1])).slice(0,4));
+  }
+  const [anio,w]=clave.split('-W').map(Number);
+  return anio<anioLectivo ? 'Semana previa' : `Semana ${w}`;
 }
 function loadLevel(n){
   if(n>=7) return {cls:'crit',label:'Sobrecarga'};
@@ -267,7 +289,7 @@ function computeLoads(){
   dated.forEach(e=>{
     const vistas=new Set();
     eachDay(e,ds=>{                       // recorrido de días: una sola implementación
-      const w=isoWeek(parseISO(ds));
+      const w=semanaLectiva(parseISO(ds));
       if(vistas.has(w)) return;
       vistas.add(w);
       const k=e.area+'|'+w;
@@ -317,9 +339,9 @@ function buildRisks(){
   // 3 · semanas en sobrecarga
   const over = LOADS.filter(l=>l.n>=7);
   over.forEach(l=>{
-    const evs = dated.filter(e=>e.area===l.area && isoWeek(parseISO(e.start))===l.week);
+    const evs = dated.filter(e=>e.area===l.area && semanaLectiva(parseISO(e.start))===l.week);
     R.push({
-      prio:'MEDIA', cls:'warn', title:`Semana ${l.week} en sobrecarga para ${meta(l.area).label}`,
+      prio:'MEDIA', cls:'warn', title:`${nombreSemana(l.week)} en sobrecarga para ${meta(l.area).label}`,
       dato:`${l.n} actividades activas en la misma semana: ${evs.slice(0,6).map(e=>'«'+e.activity+'»').join(', ')}${evs.length>6?'…':''}`,
       hallazgo:'La semana supera el umbral declarado de 7 actividades.',
       inferencia:'Una concentración así suele implicar solapamiento de equipos, espacios o público.',
@@ -379,14 +401,6 @@ function buildRisks(){
 }
 
 /* ---------------- render ---------------- */
-function renderVerdict(){
-  const crit=RISKS.filter(r=>r.prio==='CRÍTICA').length;
-  const sync=FAMS.filter(f=>f.cls==='good').length;
-  document.getElementById('verdict').innerHTML =
-    `<div class="vh"><span class="vlabel">Dictamen de la auditoría</span></div>
-     <div class="vstate">Parcialmente aprobado</div>
-     <p>De ${FAMS.length} actividades compartidas entre áreas, <b>${sync} están sincronizadas</b> y ${FAMS.length-sync} presentan diferencias de fecha. Se registran ${crit} hallazgos críticos y ${CONF.length} choques operativos entre áreas. Este tablero no convierte recomendaciones en fechas oficiales: la aprobación del calendario corresponde a Dirección Académica.</p>`;
-}
 /* Actividades cuya planificación pormenorizada vence en los próximos 15 días.
    La portada y el panorama mostraban el mismo cálculo escrito dos veces. */
 const alertas15 = () => dated.filter(e=>e.planning==='SÍ' && e.reminder)
@@ -755,7 +769,7 @@ function initScrollSpy(){
 
 const HOY = (()=>{ const d=new Date(); d.setHours(0,0,0,0); return d; })();
 const HOY_ISO = toISO(HOY);
-const SEMANA_HOY = isoWeek(HOY);
+const SEMANA_HOY = semanaLectiva(HOY);
 const MES_HOY = HOY_ISO.slice(0,7);
 
 /* ---------- tooltip compartido por los gráficos ---------- */
@@ -773,7 +787,7 @@ function tipOff(){ if(TT) TT.classList.remove('on'); }
 /* ---------- 1 · panel "ahora mismo" ---------- */
 function renderAhora(){
   const enSemana = dated.filter(e=>{
-    let hit=false; eachDay(e,ds=>{ if(isoWeek(parseISO(ds))===SEMANA_HOY) hit=true; }); return hit;
+    let hit=false; eachDay(e,ds=>{ if(semanaLectiva(parseISO(ds))===SEMANA_HOY) hit=true; }); return hit;
   });
   const conAlerta = dated.filter(e=>e.planning==='SÍ' && e.reminder && !e.recurrente);
   const vencidas  = conAlerta.filter(e=>daysFromToday(e.reminder)<0 && daysFromToday(e.start)>=0);
@@ -788,7 +802,7 @@ function renderAhora(){
     { cls: proximas.length? 'pronto':'calma', n: proximas.length, l:'Vencen en 15 días',
       x:`Enviar a ${MAIL}`, href:'#s8' },
     { cls:'', n: enSemana.length, l:`Actividades esta semana`,
-      x: `Semana ${SEMANA_HOY.split('-W')[1]} · ${fmt(HOY_ISO)}`, href:'#s3' },
+      x: `${nombreSemana(SEMANA_HOY)} · ${fmt(HOY_ISO)}`, href:'#s3' },
     { cls: (sig && diasSig===0)?'pronto':'', n: sig? (diasSig===0? enSemana.filter(e=>e.start<=HOY_ISO && endOf(e)>=HOY_ISO).length : diasSig) : '—',
       l: sig? (diasSig===0? 'Actividades hoy' : 'Días para la próxima actividad') : 'Sin actividades futuras',
       x: sig? `${sig.activity.slice(0,52)} · ${meta(sig.area).label}` : '', href:'#s3' },
@@ -862,10 +876,10 @@ function renderLoads(){
       const n=porSemana[w]||0; if(!n) return '';
       const x=PL+i*bw, h=(H-PT-PB)-(y(n)-PT);
       const nivel=loadLevel(n);
-      const et=`<b>${meta(a).label}</b><br>Semana ${w.split('-W')[1]} de ${w.slice(0,4)}<br>${n} actividad${n===1?'':'es'} · ${nivel.label}`;
+      const et=`<b>${meta(a).label}</b><br>${nombreSemana(w)} · desde el ${fmt(toISO(lunesDeSemana(w)))}<br>${n} actividad${n===1?'':'es'} · ${nivel.label}`;
       return `<g><rect x="${(x+1).toFixed(1)}" y="${y(n).toFixed(1)}" width="${Math.max(bw-2,1.5).toFixed(1)}" height="${Math.max(h,2).toFixed(1)}" rx="2" fill="var(--c)"/>`+
         `<rect x="${x.toFixed(1)}" y="${PT}" width="${bw.toFixed(1)}" height="${H-PT-PB}" fill="transparent"`+
-        ` onmousemove='tip(${JSON.stringify(et)},event)' onmouseleave="tipOff()"><title>${esc(`Semana ${w.split('-W')[1]}: ${n} actividades`)}</title></rect></g>`;
+        ` onmousemove='tip(${JSON.stringify(et)},event)' onmouseleave="tipOff()"><title>${esc(`${nombreSemana(w)}: ${n} actividades`)}</title></rect></g>`;
     }).join('');
 
     // etiqueta directa sólo en la semana más cargada si supera el umbral
@@ -874,14 +888,13 @@ function renderLoads(){
       const s=sobre[0], i=semanas.indexOf(s.week);
       const x=PL+i*bw+bw/2;
       marca=`<g><circle cx="${x.toFixed(1)}" cy="${(y(s.n)-7).toFixed(1)}" r="3" fill="var(--crit)"/>`+
-        `<text x="${x.toFixed(1)}" y="${(y(s.n)-14).toFixed(1)}" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--crit)" font-family="Source Sans 3">sem ${s.week.split('-W')[1]} · ${s.n}</text></g>`;
+        `<text x="${x.toFixed(1)}" y="${(y(s.n)-14).toFixed(1)}" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--crit)" font-family="Source Sans 3">sem ${Number(s.week.split('-W')[1])} · ${s.n}</text></g>`;
     }
 
     // marcas de mes en el eje
     const ticks=[];
     semanas.forEach((w,i)=>{
-      const lunes=(()=>{ const [yy,ww]=w.split('-W').map(Number); const d=new Date(yy,0,4);
-        d.setDate(d.getDate()-((d.getDay()+6)%7)+(ww-1)*7); return d; })();
+      const lunes=lunesDeSemana(w);
       if(lunes.getDate()<=7){
         ticks.push(`<text x="${(PL+i*bw).toFixed(1)}" y="${H-10}" font-size="11" fill="var(--ink-3)" font-family="Source Sans 3">${MESES[lunes.getMonth()]}</text>`);
       }
@@ -903,7 +916,7 @@ function renderLoads(){
   const sobrecargadas=LOADS.filter(l=>l.n>=5).sort((a,b)=>b.n-a.n||a.week.localeCompare(b.week));
   document.getElementById('loadTabla').innerHTML = sobrecargadas.map(l=>{
     const nivel=loadLevel(l.n);
-    return `<tr><td>${areaTag(l.area)}</td><td class="num">${esc(l.week)}</td><td class="num">${l.n}</td><td>${statePill(nivel.cls,nivel.label)}</td></tr>`;
+    return `<tr><td>${areaTag(l.area)}</td><td class="num">${esc(nombreSemana(l.week))}</td><td class="num">${l.n}</td><td>${statePill(nivel.cls,nivel.label)}</td></tr>`;
   }).join('') || '<tr><td colspan="4" class="muted">Ninguna semana supera las 4 actividades.</td></tr>';
   document.getElementById('loadTablaSub').textContent =
     `${sobrecargadas.length} semanas con 5 o más actividades, de ${LOADS.length} semanas registradas.`;
@@ -1068,7 +1081,7 @@ function init(){
     fillSelects(); wire();
     const selMes=document.getElementById('fMonth');
     selMes.value=[...selMes.options].some(o=>o.value===MES_HOY) ? MES_HOY : '2026-09';
-    renderVerdict(); renderHeroKpis(); renderKpis(); renderAhora(); renderHeat(); renderAvance(); renderAreaTiles(); renderSem();
+    renderHeroKpis(); renderKpis(); renderAhora(); renderHeat(); renderAvance(); renderAreaTiles(); renderSem();
     renderFamilies(); renderLoads(); renderConflicts();
     renderRisks(); renderCorr(); renderQuality();
     // applyRole() ya dispara renderCal() y renderAlerts(): no se repetían aquí

@@ -7,8 +7,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
   getAuth, onAuthStateChanged, signOut,
-  GoogleAuthProvider, signInWithPopup,
-  sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink
+  GoogleAuthProvider, signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { CONFIG, DOMINIO, SUPERADMINS, AREAS, CONFIGURADO } from "./config.js";
@@ -17,18 +16,22 @@ import { iniciarGestion } from "./gestion.js";
 const $ = s => document.querySelector(s);
 const puerta = $("#puerta");
 const aviso  = $("#pAviso");
-const CLAVE_CORREO = "ea_correo_pendiente";
 
 document.body.classList.add("sin-entrar");
 $("#pDominio").textContent = "@" + DOMINIO;
 
 function decir(txt, clase){ aviso.textContent = txt; aviso.className = "aviso " + (clase||""); }
-function bloquear(b){ ["#bGoogle","#bEnlace","#pCorreo"].forEach(s => $(s).disabled = b); }
+function bloquear(b){ $("#bGoogle").disabled = b; }
+// Hasta que Firebase responda si ya había sesión, la puerta muestra solo la espera:
+// así no se ofrece un botón que abriría una ventana de Google innecesaria.
+function esperar(txt){ $("#pEspera").textContent = txt; puerta.classList.add("comprobando"); }
+function ofrecerEntrada(){ puerta.classList.remove("comprobando"); bloquear(false); }
 const delDominio = correo => (correo||"").toLowerCase().endsWith("@" + DOMINIO.toLowerCase());
 const esAdmin    = correo => SUPERADMINS.map(c=>c.toLowerCase()).includes((correo||"").toLowerCase());
 
 /* ---------- sin configurar todavía ---------- */
 if(!CONFIGURADO){
+  ofrecerEntrada();
   decir("Falta pegar la configuración de Firebase en public/config.js.", "mal");
   bloquear(true);
   throw new Error("Firebase sin configurar");
@@ -52,57 +55,23 @@ $("#bGoogle").addEventListener("click", async () => {
   }
 });
 
-/* ---------- entrar con enlace por correo ---------- */
-$("#bEnlace").addEventListener("click", async () => {
-  const correo = $("#pCorreo").value.trim().toLowerCase();
-  if(!delDominio(correo)){
-    decir("Ese correo no es del dominio institucional.", "mal");
-    return;
-  }
-  bloquear(true); decir("Enviando el enlace…");
-  try{
-    await sendSignInLinkToEmail(auth, correo, {
-      url: location.origin + location.pathname,
-      handleCodeInApp: true
-    });
-    localStorage.setItem(CLAVE_CORREO, correo);
-    decir("Listo. Revisa tu correo y abre el enlace desde este mismo dispositivo.", "bien");
-  }catch(e){
-    bloquear(false);
-    decir("No se pudo enviar: " + e.code, "mal");
-  }
-});
-
-/* ---------- volver desde el enlace del correo ---------- */
-if(isSignInWithEmailLink(auth, location.href)){
-  const guardado = localStorage.getItem(CLAVE_CORREO) || "";
-  const correo = delDominio(guardado) ? guardado : prompt("Confirma tu correo institucional:") || "";
-  if(delDominio(correo)){
-    bloquear(true); decir("Validando el enlace…");
-    signInWithEmailLink(auth, correo, location.href)
-      .then(() => { localStorage.removeItem(CLAVE_CORREO);
-                    history.replaceState(null,"",location.pathname); })
-      .catch(e => { bloquear(false); decir("El enlace no es válido o ya caducó (" + e.code + ").", "mal"); });
-  } else {
-    decir("Ese correo no es del dominio institucional.", "mal");
-  }
-}
-
 /* ---------- el portero ---------- */
 let dentro = false;
 let escuchandoImportaciones = false;
 onAuthStateChanged(auth, async usuario => {
-  if(!usuario){ puerta.classList.remove("fuera"); bloquear(false); return; }
+  if(!usuario){ puerta.classList.remove("fuera"); ofrecerEntrada(); return; }
 
   if(!delDominio(usuario.email)){
     const ajeno = usuario.email;
     await signOut(auth);
-    bloquear(false);
+    ofrecerEntrada();
     decir(`${ajeno} no pertenece a @${DOMINIO}. Entra con tu correo institucional.`, "mal");
     return;
   }
   if(dentro) return;
   dentro = true;
+  esperar("Cargando el tablero…");
+  decir("");
   if(!escuchandoImportaciones){
     escuchandoImportaciones = true;
     let primeraLectura = true;
@@ -113,7 +82,6 @@ onAuthStateChanged(auth, async usuario => {
       if(version !== versionActual) location.reload();
     }, error => console.error("No se pudo observar la importación", error));
   }
-  decir("Cargando el tablero…", "bien");
   // El archivo del tablero puede descargarse mientras Firestore entrega los POA.
   const precarga = document.createElement("link");
   precarga.rel = "preload";
@@ -123,7 +91,7 @@ onAuthStateChanged(auth, async usuario => {
   try {
     await cargarTablero(usuario);
   } catch(e){
-    dentro = false; bloquear(false);
+    dentro = false; ofrecerEntrada();
     decir("Entraste, pero no se pudieron leer los datos: " + (e.code || e.message), "mal");
     if(e.message && e.message.includes("Firestore está vacío") && esAdmin(usuario.email)){
       const enlace=document.createElement("a");

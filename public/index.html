@@ -133,12 +133,7 @@ header.top{background:
   font-size:clamp(29px,3.3vw,44px);line-height:1.12;margin:0;text-wrap:balance;letter-spacing:-.015em}
 .hero .lede{margin:14px 0 0;color:#ccd3f2;font-size:16.5px;max-width:60ch}
 .hero .lede b{color:#fff;font-weight:600}
-.verdict{border:1px solid rgba(255,255,255,.18);border-radius:var(--radius);
-  background:rgba(255,255,255,.06);padding:18px 20px;backdrop-filter:blur(3px)}
-.verdict .vh{display:flex;align-items:center;gap:9px;margin-bottom:9px}
-.verdict .vlabel{font:700 11.5px "Source Sans 3";letter-spacing:.14em;text-transform:uppercase;color:#a8b3e6}
-.verdict .vstate{font-family:"Source Serif 4",Georgia,serif;font-size:21px;font-weight:600;color:#fff}
-.verdict p{margin:0;font-size:14.5px;line-height:1.55;color:#c8d0ee}
+.logo-anim{display:block;width:100%;height:clamp(180px,19vw,250px);align-self:center}
 .hero-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:22px;
   background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.16);border-radius:var(--radius);overflow:hidden}
 .hero-kpis .k{background:rgba(10,14,30,.55);padding:15px 17px}
@@ -424,8 +419,9 @@ footer .logo-mark{width:52px;height:35px;opacity:.45}
   nav.quicknav,.controls,.role-bar,.finding .actions,#s3,#s5{display:none!important}
   body{background:#fff;font-size:11pt}
   header.top{background:none;color:#000;padding:0 0 12pt}
-  .hero h1,.verdict .vstate{color:#000}
-  .hero .lede,.verdict p,.brand .ctx{color:#333}
+  .hero h1{color:#000}
+  .hero .lede,.brand .ctx{color:#333}
+  .logo-anim{display:none}
   .hero-kpis .kn{color:#000} .hero-kpis .kl{color:#444}
   .hero-kpis .k{background:#f4f4f7}
   section{break-inside:avoid;box-shadow:none;border:1px solid #bbb;padding:12pt}
@@ -719,7 +715,8 @@ dialog .db{max-height:min(62vh,560px);overflow:auto}
       <p class="lede"><b id="hdr-count">—</b> actividades leídas directamente de los siete POA — Kids, Primaria, Secundaria, DECE, Marketing, Gestión de Riesgos y Zoobotánica — y comparadas entre sí, para que ningún cumplimiento, ni incumplimiento, pase desapercibido.</p>
       <div class="hero-kpis" id="heroKpis"></div>
     </div>
-    <div class="verdict" id="verdict"></div>
+    <canvas class="logo-anim" id="logoAnim" role="img"
+            aria-label="Eight Academy, Unidad Educativa. Un sistema organizado es un sistema exitoso."></canvas>
   </div>
   <div class="role-bar">
     <label for="roleSelect">Perfil</label>
@@ -958,12 +955,13 @@ dialog .db{max-height:min(62vh,560px);overflow:auto}
 #puerta button.principal{background:#f5d04e;color:#1a1400;border-color:#f5d04e}
 #puerta button.principal:hover{filter:brightness(1.06)}
 #puerta button:disabled{opacity:.5;cursor:not-allowed}
-#puerta .o{display:flex;align-items:center;gap:12px;width:100%;color:#7d87b5;font-size:12.5px}
-#puerta .o::before,#puerta .o::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.16)}
-#puerta input{width:100%;min-height:48px;border-radius:11px;padding:0 15px;font-size:16px;
-  border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.07);color:#fff;
-  font-family:inherit}
-#puerta input::placeholder{color:#7d87b5}
+#puerta .nota{color:#aab4e2;font-size:13.5px;line-height:1.5;margin:0}
+#puerta .espera{display:flex;align-items:center;justify-content:center;gap:11px;min-height:48px;
+  color:#c8d0ee;font-size:15px}
+#puerta .giro{width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,255,255,.2);
+  border-top-color:#f5d04e;animation:giro .8s linear infinite}
+@keyframes giro{to{transform:rotate(360deg)}}
+#puerta.comprobando #bGoogle,#puerta.comprobando .nota,#puerta:not(.comprobando) .espera{display:none}
 #puerta .aviso{min-height:20px;font-size:13.5px;line-height:1.45}
 #puerta .aviso.mal{color:#fca5a5}
 #puerta .aviso.bien{color:#86efac}
@@ -980,7 +978,7 @@ body.sin-entrar > *:not(#puerta){display:none!important}
   border-radius:9px;min-height:34px;padding:0 13px;font:600 13px "Source Sans 3";cursor:pointer}
 </style>
 
-<div id="puerta" class="">
+<div id="puerta" class="comprobando">
   <div class="caja">
     <div class="marca">
       <svg viewBox="0 0 150 100" aria-hidden="true"><path d="M30,50 C30,22 58,22 75,50 C92,78 120,78 120,50 C120,22 92,22 75,50 C58,78 30,78 30,50 Z" fill="none" stroke="#0EA5E9" stroke-width="19"/></svg>
@@ -992,14 +990,11 @@ body.sin-entrar > *:not(#puerta){display:none!important}
 
     <button class="principal" id="bGoogle" type="button">
       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M45 24c0-1.6-.1-2.7-.4-3.9H24v7.1h12c-.2 1.9-1.5 4.7-4.3 6.6l6.6 5.1C42.2 35.3 45 30.1 45 24z"/><path fill="#34A853" d="M24 46c5.8 0 10.6-1.9 14.1-5.2l-6.6-5.1c-1.8 1.2-4.2 2.1-7.5 2.1-5.7 0-10.6-3.8-12.3-9l-6.9 5.3C8.3 41.1 15.6 46 24 46z"/><path fill="#FBBC05" d="M11.7 28.8c-.5-1.3-.7-2.7-.7-4.1s.3-2.8.7-4.1l-6.9-5.4C3.6 18 3 20.9 3 24s.6 6 1.8 8.8l6.9-4z"/><path fill="#EA4335" d="M24 10.8c3.2 0 5.4 1.4 6.6 2.5l5.8-5.7C32.9 4.3 28.2 2 24 2 15.6 2 8.3 6.9 4.8 15.2l6.9 5.4c1.7-5.2 6.6-9.8 12.3-9.8z"/></svg>
-      Entrar con Google
+      Iniciar sesión
     </button>
-
-    <div class="o">o</div>
-
-    <input id="pCorreo" type="email" inputmode="email" autocomplete="email"
-           placeholder="tu.nombre@eightacademy.edu.ec" aria-label="Correo institucional">
-    <button id="bEnlace" type="button">Enviarme un enlace de acceso</button>
+    <p class="nota">Ingresa con tu correo y contraseña institucionales.<br>
+       Si no eres super administrador, entrarás en modo lectura.</p>
+    <div class="espera" role="status"><span class="giro" aria-hidden="true"></span><span id="pEspera">Verificando tu sesión…</span></div>
 
     <p class="aviso" id="pAviso" role="status" aria-live="polite"></p>
     <p class="pie">Solo se admiten cuentas del dominio institucional.<br>
@@ -1008,6 +1003,7 @@ body.sin-entrar > *:not(#puerta){display:none!important}
 </div>
 
 <script type="module" src="./acceso.js"></script>
+<script type="module" src="./logo-animado.js"></script>
 
 </body>
 </html>
