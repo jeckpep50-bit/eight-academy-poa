@@ -3,20 +3,20 @@ const FRASE = ["Un sistema organizado", "es un sistema exitoso"];
 const COLOR_FRASE = [[238, 241, 255], [245, 208, 78]];
 const LOGO = "./img/logo-eight-academy.png";
 
-// S: dispersos · L: logo · D: polvo del logo · T: frase · E: polvo de la frase
-const OPACIDAD = { S: 0, L: 1, D: 0.12, T: 1, E: 0.12 };
+// S: dispersos alrededor del logo · L: logo · T: frase.
+// Cada píxel viaja directo de su sitio en el logo a su sitio en la frase:
+// sin una nube intermedia, el cambio no deja manchas a la vista.
+const OPACIDAD = { S: 0, L: 1, T: 1 };
 const TRAMOS = [
   { de: "S", a: "L", dur: 2200 },   // solo la primera vez
   { de: "L", a: "L", dur: 2800 },
-  { de: "L", a: "D", dur: 1500 },
-  { de: "D", a: "T", dur: 1800 },
+  { de: "L", a: "T", dur: 2600 },
   { de: "T", a: "T", dur: 3600 },
-  { de: "T", a: "E", dur: 1500 },
-  { de: "E", a: "L", dur: 1800 },
+  { de: "T", a: "L", dur: 2600 },
 ];
 const CICLO = TRAMOS.slice(1).reduce((s, t) => s + t.dur, 0);
 const T_LOGO = TRAMOS[0].dur + 200;
-const T_FRASE = TRAMOS[0].dur + TRAMOS[1].dur + TRAMOS[2].dur + TRAMOS[3].dur + 200;
+const T_FRASE = TRAMOS[0].dur + TRAMOS[1].dur + TRAMOS[2].dur + 200;
 const DEMORA_MAX = 0.4;
 
 const lienzo = document.getElementById("logoAnim");
@@ -106,16 +106,15 @@ function arrancar(cv) {
 
     const f32 = () => new Float32Array(N);
     P = { x: {}, y: {}, cL: new Uint8Array(N * 3), cT: new Uint8Array(N * 3), demora: f32(), semilla: f32() };
-    for (const k of "SLDTE") { P.x[k] = f32(); P.y[k] = f32(); }
+    for (const k of "SLT") { P.x[k] = f32(); P.y[k] = f32(); }
 
     for (let i = 0; i < N; i++) {
       const [lx, ly, lr, lg, lb] = logo[i];
       const [tx, ty, tr, tg, tb] = frase[i];
-      P.x.S[i] = Math.random() * W;            P.y.S[i] = Math.random() * H;
-      P.x.L[i] = lx;                           P.y.L[i] = ly;
-      P.x.T[i] = tx;                           P.y.T[i] = ty;
-      P.x.D[i] = lx + 40 + Math.random() * 190; P.y.D[i] = ly - 15 - Math.random() * 85;
-      P.x.E[i] = tx + 40 + Math.random() * 190; P.y.E[i] = ty - 15 - Math.random() * 85;
+      const ang = Math.random() * Math.PI * 2, radio = 30 + Math.random() * 110;
+      P.x.S[i] = lx + Math.cos(ang) * radio; P.y.S[i] = ly + Math.sin(ang) * radio * 0.6;
+      P.x.L[i] = lx;                         P.y.L[i] = ly;
+      P.x.T[i] = tx;                         P.y.T[i] = ty;
       P.cL.set([lr, lg, lb], i * 3);
       P.cT.set([tr, tg, tb], i * 3);
       P.demora[i] = (lx / W) * (DEMORA_MAX - 0.08) + Math.random() * 0.08;
@@ -134,7 +133,7 @@ function arrancar(cv) {
   }
 
   const suave = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-  const colorDe = k => (k === "T" || k === "E" ? P.cT : P.cL);
+  const colorDe = k => (k === "T" ? P.cT : P.cL);
 
   function dibujar() {
     if (!N) return;
@@ -150,11 +149,13 @@ function arrancar(cv) {
     for (let i = 0; i < N; i++) {
       let p = quieto ? 1 : Math.min(1, Math.max(0, (s - P.demora[i]) / (1 - DEMORA_MAX)));
       p = suave(p);
-      const giro = quieto ? 0.35 : Math.sin(Math.PI * p) * 16;
       const sem = P.semilla[i];
+      const arco = quieto ? 0 : Math.sin(Math.PI * p);
+      const giro = quieto ? 0.35 : arco * 5;
       const x = xa[i] + (xb[i] - xa[i]) * p + Math.sin(t * 2.1 + sem) * giro;
-      const y = ya[i] + (yb[i] - ya[i]) * p + Math.cos(t * 1.7 + sem) * giro;
-      const op = oa + (ob - oa) * p;
+      const y = ya[i] + (yb[i] - ya[i]) * p + Math.cos(t * 1.7 + sem) * giro
+              - arco * (14 + sem * 4);
+      const op = (oa + (ob - oa) * p) * (1 - 0.3 * arco);
       if (op <= 0.01) continue;
       const j = i * 3;
       const r = ca[j] + (cb[j] - ca[j]) * p;

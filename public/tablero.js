@@ -422,7 +422,6 @@ function renderKpis(){
     [CONF.filter(c=>c.sev==='CRÍTICA').length,'Choques críticos','crit','s6'],
     [RISKS.length,'Hallazgos en la matriz','','s7'],
     [alerts,'Alertas activas (15 días)','','s8'],
-    [D.corrections.length,'Correcciones trazadas','','s10'],
   ];
   document.getElementById('kpis').innerHTML = t.map(([n,l,c,a])=>`<a class="tile ${c}" href="#${a}"><div class="metric num">${n}</div><div class="label">${esc(l)}</div></a>`).join('');
   document.getElementById('hdr-count').textContent = D.events.length;
@@ -598,12 +597,6 @@ function renderAlerts(){
       <td><span class="badge ${cls==='crit'?'c':cls}">${lab}</span></td>
       <td>${esc(e.responsable||'—')}</td></tr>`;
   }).join('') || '<tr><td colspan="6" class="muted">Sin alertas con este filtro.</td></tr>';
-}
-function renderCorr(){
-  document.getElementById('corr').innerHTML = D.corrections.map(c=>`<tr>
-    <td>${areaTag(c.area)}</td>
-    <td class="num">${esc(c.row)}</td><td>${esc(c.kind)}</td>
-    <td><span class="trace">${esc(c.from)}</span></td><td>${esc(c.to)}</td><td class="cell-note">${esc(c.why)}</td></tr>`).join('');
 }
 function renderQuality(){
   const withResp=D.events.filter(e=>e.responsable).length;
@@ -1083,7 +1076,7 @@ function init(){
     selMes.value=[...selMes.options].some(o=>o.value===MES_HOY) ? MES_HOY : '2026-09';
     renderHeroKpis(); renderKpis(); renderAhora(); renderHeat(); renderAvance(); renderAreaTiles(); renderSem();
     renderFamilies(); renderLoads(); renderConflicts();
-    renderRisks(); renderCorr(); renderQuality();
+    renderRisks(); renderQuality();
     // applyRole() ya dispara renderCal() y renderAlerts(): no se repetían aquí
     applyRole(IS_SUPERADMIN?'admin':'directivo'); initScrollSpy(); initTactil();
     GESTION.suscribir(estado => {
