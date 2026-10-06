@@ -256,19 +256,15 @@ section > .sub{margin:0 0 14px;color:var(--ink-2);font-size:14.5px;max-width:86c
 .stars-cell.cb-grande{color:var(--class-grande)}.stars-cell.cb-mediana{color:var(--class-mediana)}.stars-cell.cb-pequena{color:var(--class-pequena)}
 
 /* ---------------- MINUTO A MINUTO: neón si se entregó, marca de agua si no ---------------- */
-.ev.entregada,.mev.entregada{z-index:1;background:var(--c);color:var(--ci);font-weight:700;border-left-color:var(--ci);
-  box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--c),0 0 18px 6px var(--c);
-  box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--c),0 0 18px 6px color-mix(in srgb,var(--c) 90%,transparent),
-    0 0 42px 14px color-mix(in srgb,var(--c) 45%,transparent)}
+/* todo el brillo va por dentro: nada sale del borde ni tapa a las actividades vecinas */
+.ev.entregada,.mev.entregada{background:var(--c);color:var(--ci);font-weight:700;border-left-color:var(--ci);
+  box-shadow:inset 0 0 0 2px var(--ci),inset 0 0 14px rgba(255,255,255,.35)}
 /* el pulso va en una capa aparte y solo cambia la opacidad: no repinta el texto */
-.ev.entregada::after,.mev.entregada::after{content:"";position:absolute;inset:-4px;border-radius:10px;pointer-events:none;
-  box-shadow:0 0 26px 8px var(--c);opacity:.35;animation:neonPulso 1.8s ease-in-out infinite alternate}
-@keyframes neonPulso{to{opacity:.95}}
-.ev.entregada::before,.mev.entregada::before{content:"✓";position:absolute;top:-8px;left:-7px;width:18px;height:18px;
-  display:grid;place-items:center;border-radius:50%;background:var(--surface);color:var(--c);
-  font:900 11px/1 "Source Sans 3",Arial,sans-serif;box-shadow:0 0 0 2px var(--c),0 1px 4px rgba(0,0,0,.35)}
-.mev.entregada::before{width:14px;height:14px;top:-6px;left:-5px;font-size:9px}
+.ev.entregada::after,.mev.entregada::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  box-shadow:inset 0 0 18px 3px rgba(255,255,255,.6);opacity:.25;animation:neonPulso 1.8s ease-in-out infinite alternate}
+@keyframes neonPulso{to{opacity:.9}}
 .ev.entregada .evtk,.mev.entregada .evtk{background:var(--ci);color:var(--c)}
+.ev.entregada .evtk::after,.mev.entregada .evtk::after{content:" ✓"}
 .ev.incumplida,.mev.incumplida{opacity:.55;border-left-style:dashed;color:var(--ink-2);
   background:repeating-linear-gradient(-45deg,var(--cs) 0 7px,transparent 7px 14px);
   box-shadow:inset 0 0 0 1.5px var(--c);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--c) 55%,transparent);filter:grayscale(.35)}
