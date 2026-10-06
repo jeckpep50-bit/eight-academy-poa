@@ -20,6 +20,7 @@ const meta = a => META[a] || {label:String(a||'—'), cls:'', color:'—', mono:
 const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const MESES_L = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const MAIL = 'planificacion@eightacademy.edu.ec';
+const COPIA = 'mibermeov@eightacademy.edu.ec';
 
 /* Identidad de área: bloque sólido con monograma. Color + letra + posición fija,
    para que se distingan también impresas en blanco y negro o por un daltónico. */
@@ -86,12 +87,49 @@ function estadoEntrega(id){
   if(a&&a.estado==='incumplida') return 'incumplida';
   return getEntregas()[id] ? 'entregada' : '';
 }
-function textoEntrega(id){
-  const est=estadoEntrega(id), clase=getClassMap()[id];
-  if(est==='incumplida') return `<b>No entregado</b> · actividad registrada como incumplida${getEntregas()[id]?' (se marcó como entregado después del seguimiento)':''}`;
-  if(est==='entregada') return '<b>Entregado</b> · los avisos por correo están detenidos';
-  if(!clase||!CLASS_META[clase]) return 'Sin avisos por correo: la actividad no tiene clasificación';
-  return 'Pendiente';
+/* Avisos del minuto a minuto, con el mismo módulo (logica-avisos.js) que usa el
+   script de correo: la plataforma muestra exactamente las fechas que se envían. */
+const NOMBRE_FASE=Object.fromEntries(FASES_AVISO);
+const CAL_AVISOS = window.Logica ? Logica.crearCalendario(D.avisos.noLaborables) : null;
+let SITUACIONES=null;
+function situacion(e){
+  const est=estadoEntrega(e.id), aviso=getAvisos()[e.id], clase=getClassMap()[e.id];
+  let plan=null;
+  if(CAL_AVISOS && CLASS_META[clase]){
+    const desde = HOY_ISO < D.avisos.inicio ? D.avisos.inicio : HOY_ISO;
+    plan = Logica.planificar(clase, e.start, (aviso&&aviso.entrada)||desde, CAL_AVISOS);
+  }
+  if(est) return {estado:est, plan};
+  if(!plan) return null;
+  const enviadas=(aviso&&aviso.fases)||{};
+  const proxima=plan.fases.find(f=>!enviadas[f.fase] && f.fecha>=HOY_ISO)||null;
+  return {estado: plan.fechaLimite<HOY_ISO ? 'vencida' : 'pendiente', plan, proxima};
+}
+function situaciones(){
+  if(!SITUACIONES){
+    SITUACIONES=new Map();
+    dated.forEach(e=>{ const s=situacion(e); if(s) SITUACIONES.set(e.id,s); });
+  }
+  return SITUACIONES;
+}
+const habilesHasta = iso => CAL_AVISOS.habilesEntre(HOY_ISO, iso);
+function resumenAvisos(){
+  const todas=[...situaciones().values()];
+  const pendientes=todas.filter(s=>s.estado==='pendiente'||s.estado==='vencida');
+  return {
+    pendientes,
+    vencidas: pendientes.filter(s=>s.estado==='vencida'),
+    porVencer: pendientes.filter(s=>s.estado==='pendiente' && habilesHasta(s.plan.fechaLimite)<=10)
+  };
+}
+function textoEntrega(e){
+  const s=situaciones().get(e.id);
+  if(s&&s.estado==='incumplida') return `<b>No entregado</b> · actividad registrada como incumplida${getEntregas()[e.id]?' (se marcó como entregado después del seguimiento)':''}`;
+  if(s&&s.estado==='entregada') return '<b>Entregado</b> · los avisos por correo están detenidos';
+  if(s) return `<b>${s.estado==='vencida'?'Fecha límite vencida':'Pendiente'}</b> · entregar antes del ${fmt(s.plan.fechaLimite)} a ${MAIL} con copia a ${COPIA}`+
+    (s.proxima?`<br>Próximo aviso: ${NOMBRE_FASE[s.proxima.fase]}, ${fmt(s.proxima.fecha)}`:'');
+  if(!CLASS_META[getClassMap()[e.id]]) return 'Sin avisos por correo: la actividad no tiene clasificación';
+  return 'Sin avisos por correo: la actividad ya pasó o no queda tiempo para avisar';
 }
 function textoAvisos(id){
   const a=getAvisos()[id];
@@ -125,6 +163,13 @@ async function setClass(c){
 const dated = D.events.filter(e=>e.start);
 
 /* ---------------- diálogo de detalle ---------------- */
+if(typeof HTMLDialogElement==='undefined'){
+  document.documentElement.classList.add('sin-dialog');
+  document.querySelectorAll('dialog').forEach(d=>{
+    d.showModal=()=>d.setAttribute('open','');
+    d.close=()=>{ d.removeAttribute('open'); d.dispatchEvent(new Event('close')); };
+  });
+}
 function openDetail(title, rows){
   document.getElementById('dTitle').textContent = title;
   document.getElementById('dBody').innerHTML = rows.filter(r=>r[1]).map(r=>`<dt>${esc(r[0])}</dt><dd>${r[1]}</dd>`).join('');
@@ -152,8 +197,7 @@ function evRows(e){
     ['Prioridad', esc(e.prioridad||'')],
     ['Estado', esc(e.estado||'')],
     ['Observaciones', esc(e.notas||'')],
-    ['Planificación pormenorizada', e.planning==='SÍ' ? `Requerida · enviar antes del ${fmt(e.reminder)} a ${MAIL}` : 'Por validar'],
-    ['Minuto a minuto', e.start ? textoEntrega(e.id) : ''],
+    ['Minuto a minuto', e.start ? textoEntrega(e) : ''],
     ['Avisos enviados', IS_SUPERADMIN ? textoAvisos(e.id) : ''],
     ['Texto original en el POA', `<span class="trace">${esc(e.original||'')}</span>`],
     ['Fuente', `<span class="trace">${esc(e.sourceFile)} · hoja «${esc(e.sourceSheet)}» · fila ${esc(e.sourceRow)}</span>`],
@@ -427,7 +471,7 @@ function buildRisks(){
       prio:'ALTA', cls:'warn', title:`${noDate.length} actividades sin fecha declarada`,
       dato: noDate.map(e=>`${meta(e.area).label}: «${e.activity}» (fila ${e.sourceRow})`).join(' · '),
       hallazgo:'La celda de fecha está vacía o indica sólo un período abierto.',
-      inferencia:'No pueden ubicarse en el calendario ni generar alerta de 15 días.',
+      inferencia:'No pueden ubicarse en el calendario ni recibir avisos del minuto a minuto.',
       recomendacion:'Definir la fecha en el POA o declararlas explícitamente como transversales de todo el año.',
       validacion:'Sí.', fuentes:[...new Set(noDate.map(e=>e.sourceFile))], evs:noDate
     });
@@ -441,19 +485,13 @@ function buildRisks(){
 }
 
 /* ---------------- render ---------------- */
-/* Actividades cuya planificación pormenorizada vence en los próximos 15 días.
-   La portada y el panorama mostraban el mismo cálculo escrito dos veces. */
-const alertas15 = () => dated.filter(e=>e.planning==='SÍ' && e.reminder)
-  .map(e=>daysFromToday(e.reminder)).filter(d=>d>=0 && d<=15).length;
 function renderHeroKpis(){
-  const alerts=alertas15();
   const k=[[D.events.length,'Actividades auditadas'],[AREAS.length,'Áreas comparadas'],
-           [RISKS.filter(r=>r.prio==='CRÍTICA').length,'Hallazgos críticos'],[alerts,'Alertas activas · 15 días']];
+           [RISKS.filter(r=>r.prio==='CRÍTICA').length,'Hallazgos críticos'],[resumenAvisos().pendientes.length,'Minuto a minuto pendientes']];
   document.getElementById('heroKpis').innerHTML=
     k.map(([n,l])=>`<div class="k"><div class="kn">${n}</div><div class="kl">${esc(l)}</div></div>`).join('');
 }
 function renderKpis(){
-  const alerts = alertas15();
   const t=[
     [D.events.length,'Actividades en total','', 's3'],
     [FAMS.length,'Compartidas entre áreas','','s4'],
@@ -461,7 +499,7 @@ function renderKpis(){
     [FAMS.filter(f=>f.cls==='crit').length,'Inconsistencias críticas','crit','s4'],
     [CONF.filter(c=>c.sev==='CRÍTICA').length,'Choques críticos','crit','s6'],
     [RISKS.length,'Hallazgos en la matriz','','s7'],
-    [alerts,'Alertas activas (15 días)','','s8'],
+    [resumenAvisos().pendientes.length,'Minuto a minuto pendientes','','s8'],
   ];
   document.getElementById('kpis').innerHTML = t.map(([n,l,c,a])=>`<a class="tile ${c}" href="#${a}"><div class="metric num">${n}</div><div class="label">${esc(l)}</div></a>`).join('');
   document.getElementById('hdr-count').textContent = D.events.length;
@@ -524,7 +562,7 @@ function evHTML(e,mini){
 window.showEv = id => { const e=D.events.find(x=>x.id===id); if(e){ openDetail(e.activity, evRows(e)); currentClassEventId=id; document.getElementById('dClassBtn').classList.remove('hidden'); refreshClassUI(); refreshEntregaUI(); } };
 /* al cambiar el estado compartido, el detalle abierto se actualiza sin perder el scroll */
 function refreshDetalleAbierto(){
-  if(currentClassEventId==null||!document.getElementById('detail').open) return;
+  if(currentClassEventId==null||!document.getElementById('detail').hasAttribute('open')) return;
   const e=D.events.find(x=>x.id===currentClassEventId);
   if(!e) return;
   document.getElementById('dBody').innerHTML = evRows(e).filter(r=>r[1]).map(r=>`<dt>${esc(r[0])}</dt><dd>${r[1]}</dd>`).join('');
@@ -631,22 +669,42 @@ window.toggleRev = async id => {
   try { await GESTION.guardarRevision(id, !getRev()[id]); }
   catch(error){ alert('No se pudo guardar la revisión: '+(error.code||error.message)); }
 };
+const FILTRO_AVISOS={pendientes:['pendiente','vencida'],vencidas:['vencida'],entregadas:['entregada'],incumplidas:['incumplida']};
+function insigniaAviso(s){
+  if(!s) return '<span class="badge n">Sin estrellas</span>';
+  if(s.estado==='entregada') return '<span class="badge b">Entregado</span>';
+  if(s.estado==='incumplida') return '<span class="badge c">Incumplida</span>';
+  if(s.estado==='vencida') return '<span class="badge c">Fecha límite vencida</span>';
+  const n=habilesHasta(s.plan.fechaLimite);
+  return `<span class="badge ${n<=5?'a':'n'}">${n===0?'Vence hoy':`Faltan ${n} días háb.`}</span>`;
+}
 function renderAlerts(){
-  const ar=document.getElementById('aArea').value, w=document.getElementById('aWin').value;
-  let l=dated.filter(e=>e.planning==='SÍ'&&e.reminder&&!e.recurrente);
-  if(ar!=='ALL') l=l.filter(e=>e.area===ar);
-  l=l.map(e=>({e,d:daysFromToday(e.reminder)}));
-  if(w==='-1') l=l.filter(x=>x.d<0); else if(w!=='9999') l=l.filter(x=>x.d>=0&&x.d<=+w);
-  l.sort((a,b)=>a.d-b.d);
-  document.getElementById('alerts').innerHTML = l.map(({e,d})=>{
-    const cls=d<0?'crit':d<=5?'a':'b';
-    const lab=d<0?`Vencida hace ${Math.abs(d)} d`:d===0?'Hoy':`En ${d} días`;
+  const cuerpo=document.getElementById('alerts');
+  if(!CAL_AVISOS){ cuerpo.innerHTML='<tr><td colspan="7" class="muted">No se pudo cargar el calendario de avisos. Recarga la página.</td></tr>'; return; }
+  const ar=document.getElementById('aArea').value, w=document.getElementById('aWin').value, sit=situaciones();
+  let filas;
+  if(w==='sin'){
+    filas=dated.filter(e=>e.start>=HOY_ISO && !CLASS_META[getClassMap()[e.id]] && !sit.has(e.id)).map(e=>({e,s:null}));
+  } else {
+    filas=dated.filter(e=>sit.has(e.id)).map(e=>({e,s:sit.get(e.id)}));
+    if(FILTRO_AVISOS[w]) filas=filas.filter(x=>FILTRO_AVISOS[w].includes(x.s.estado));
+    if(w==='proximas') filas=filas.filter(x=>x.s.estado==='pendiente' && habilesHasta(x.s.plan.fechaLimite)<=10);
+  }
+  if(ar!=='ALL') filas=filas.filter(x=>x.e.area===ar);
+  const clave=x=>(x.s&&x.s.plan&&(x.s.estado==='pendiente'||x.s.estado==='vencida') ? x.s.plan.fechaLimite : x.e.start);
+  filas.sort((a,b)=>clave(a).localeCompare(clave(b)));
+  cuerpo.innerHTML = filas.map(({e,s})=>{
+    const clase=CLASS_META[getClassMap()[e.id]];
+    const limite = s&&s.plan&&(s.estado==='pendiente'||s.estado==='vencida') ? fmt(s.plan.fechaLimite) : '—';
+    const proximo = s&&s.proxima ? `${NOMBRE_FASE[s.proxima.fase]} · ${fmt(s.proxima.fecha)}` : '—';
     return `<tr class="clickable" ${filaActivable(`showEv(${e.id})`)}><td>${esc(e.activity)}</td>
       <td>${areaTag(e.area)}</td>
-      <td class="num">${fmt(e.start)}</td><td class="num">${fmt(e.reminder)}</td>
-      <td><span class="badge ${cls==='crit'?'c':cls}">${lab}</span></td>
-      <td>${esc(e.responsable||'—')}</td></tr>`;
-  }).join('') || '<tr><td colspan="6" class="muted">Sin alertas con este filtro.</td></tr>';
+      <td class="num">${fmt(e.start)}</td>
+      <td>${clase?`<span class="stars-cell cb-${getClassMap()[e.id]}" title="${esc(clase.label)}">${clase.stars}</span>`:'—'}</td>
+      <td class="num">${limite}</td>
+      <td>${esc(proximo)}</td>
+      <td>${insigniaAviso(s)}</td></tr>`;
+  }).join('') || '<tr><td colspan="7" class="muted">Ninguna actividad con este filtro.</td></tr>';
 }
 /* ---------------- ICS ---------------- */
 /* RFC 5545 §3.3.11: en un valor TEXT, la barra, el punto y coma, la coma y el salto
@@ -677,7 +735,7 @@ function ics(area){
            'CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:'+ical(nombre),'X-WR-TIMEZONE:America/Guayaquil'];
   evs.forEach(e=>{
     const end=addDays(endOf(e),1);
-    const desc=`Área: ${meta(e.area).label}\nResponsable: ${e.responsable||'no especificado'}\nFuente: ${e.sourceFile} (fila ${e.sourceRow})\nEnviar la planificación pormenorizada a ${MAIL}`;
+    const desc=`Área: ${meta(e.area).label}\nResponsable: ${e.responsable||'no especificado'}\nFuente: ${e.sourceFile} (fila ${e.sourceRow})\nMinuto a minuto: enviar a ${MAIL} con copia a ${COPIA}`;
     L.push('BEGIN:VEVENT',
       `UID:ea-${e.id}@eightacademy.edu.ec`,
       `DTSTAMP:${stamp}`,
@@ -686,10 +744,11 @@ function ics(area){
       'SUMMARY:'+ical(`[${meta(e.area).label}] ${e.activity}`),
       'DESCRIPTION:'+ical(desc),
       'CATEGORIES:'+ical(meta(e.area).label));
-    if(e.planning==='SÍ'&&e.reminder){
-      // disparador relativo al inicio: equivale a "inicio − 15 días" sin depender del huso
-      L.push('BEGIN:VALARM','TRIGGER;RELATED=START:-P15D','ACTION:DISPLAY',
-        'DESCRIPTION:'+ical(`Enviar la planificación pormenorizada de esta actividad al correo ${MAIL}`),
+    // alarma el día de la fecha límite de entrega, a las 09:00 de Ecuador (14:00 UTC)
+    const s=situaciones().get(e.id);
+    if(s&&s.estado==='pendiente'){
+      L.push('BEGIN:VALARM',`TRIGGER;VALUE=DATE-TIME:${dt(s.plan.fechaLimite)}T140000Z`,'ACTION:DISPLAY',
+        'DESCRIPTION:'+ical(`Hoy vence la entrega del minuto a minuto: ${MAIL} con copia a ${COPIA}`),
         'END:VALARM');
     }
     L.push('END:VEVENT');
@@ -816,18 +875,16 @@ function renderAhora(){
   const enSemana = dated.filter(e=>{
     let hit=false; eachDay(e,ds=>{ if(semanaLectiva(parseISO(ds))===SEMANA_HOY) hit=true; }); return hit;
   });
-  const conAlerta = dated.filter(e=>e.planning==='SÍ' && e.reminder && !e.recurrente);
-  const vencidas  = conAlerta.filter(e=>daysFromToday(e.reminder)<0 && daysFromToday(e.start)>=0);
-  const proximas  = conAlerta.filter(e=>{const d=daysFromToday(e.reminder); return d>=0 && d<=15;});
+  const { vencidas, porVencer } = resumenAvisos();
   const futuros   = dated.filter(e=>daysFromToday(e.start)>=0).sort((a,b)=>a.start.localeCompare(b.start));
   const sig       = futuros[0];
   const diasSig   = sig ? daysFromToday(sig.start) : null;
 
   const tarjetas = [
-    { cls: vencidas.length? 'urge':'calma', n: vencidas.length, l:'Planificaciones vencidas',
-      x: vencidas.length? 'Su fecha límite de envío ya pasó' : 'Ninguna pendiente atrasada', href:'#s8' },
-    { cls: proximas.length? 'pronto':'calma', n: proximas.length, l:'Vencen en 15 días',
-      x:`Enviar a ${MAIL}`, href:'#s8' },
+    { cls: vencidas.length? 'urge':'calma', n: vencidas.length, l:'Entregas vencidas',
+      x: vencidas.length? 'La fecha límite del minuto a minuto ya pasó' : 'Ningún minuto a minuto atrasado', href:'#s8' },
+    { cls: porVencer.length? 'pronto':'calma', n: porVencer.length, l:'Vencen en 10 días hábiles',
+      x:`Enviar a ${MAIL} con copia a ${COPIA}`, href:'#s8' },
     { cls:'', n: enSemana.length, l:`Actividades esta semana`,
       x: `${nombreSemana(SEMANA_HOY)} · ${fmt(HOY_ISO)}`, href:'#s3' },
     { cls: (sig && diasSig===0)?'pronto':'', n: sig? (diasSig===0? enSemana.filter(e=>e.start<=HOY_ISO && endOf(e)>=HOY_ISO).length : diasSig) : '—',
@@ -1113,14 +1170,22 @@ function init(){
     renderRisks();
     // applyRole() ya dispara renderCal() y renderAlerts(): no se repetían aquí
     applyRole(IS_SUPERADMIN?'admin':'directivo'); initScrollSpy(); initTactil();
+    // Al arrancar llegan varias colecciones casi a la vez: se repinta una sola vez por cuadro.
+    let repintado=0;
     GESTION.suscribir(estado => {
       if(estado.error){
         const aviso=document.getElementById('rSub');
         if(aviso) aviso.textContent='No se pudo sincronizar el estado compartido: '+(estado.error.code||estado.error.message);
         return;
       }
-      renderRisks(); renderAvance(); renderCal();
-      refreshDetalleAbierto();
+      SITUACIONES=null;
+      if(repintado) return;
+      repintado=requestAnimationFrame(()=>{
+        repintado=0;
+        renderRisks(); renderAvance(); renderCal();
+        renderHeroKpis(); renderKpis(); renderAhora(); renderAlerts();
+        refreshDetalleAbierto();
+      });
     });
     console.info(`POA: cálculo y presentación en ${Math.round(performance.now() - inicioRender)} ms`);
   }catch(err){

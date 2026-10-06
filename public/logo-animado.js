@@ -34,7 +34,7 @@ function arrancar(cv) {
   listo.catch(() => { cv.hidden = true; });
 
   let W = 0, H = 0, dpr = 1, datos = null, buf = null;
-  let N = 0, P = null, bloque = 1;
+  let N = 0, P = null, bloque = 1, quietoPintado = null;
   let visible = false, raf = 0, reloj = 0, ultimo = 0, primera = true;
 
   let espera;
@@ -47,7 +47,7 @@ function arrancar(cv) {
     const r = cv.getBoundingClientRect();
     if (r.width < 10 || r.height < 10) return;
     try { await listo; } catch { return; }
-    dpr = Math.min(2, window.devicePixelRatio || 1);
+    dpr = Math.min(matchMedia("(pointer: coarse)").matches ? 1.5 : 2, window.devicePixelRatio || 1);
     W = Math.round(r.width); H = Math.round(r.height);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     datos = ctx.createImageData(cv.width, cv.height);
@@ -74,6 +74,7 @@ function arrancar(cv) {
   }
 
   function construir() {
+    quietoPintado = null;
     const paso = W < 900 ? 2 : 3;
     bloque = Math.max(1, Math.round(paso * 0.85 * dpr));
 
@@ -140,6 +141,9 @@ function arrancar(cv) {
     const [tramo, s] = tramoActual();
     const { de, a } = tramo;
     const quieto = de === a;
+    // mientras el logo o la frase están quietos no hace falta repintar
+    if (quieto && tramo === quietoPintado) return;
+    quietoPintado = quieto ? tramo : null;
     const xa = P.x[de], ya = P.y[de], xb = P.x[a], yb = P.y[a];
     const ca = colorDe(de), cb = colorDe(a);
     const oa = OPACIDAD[de], ob = OPACIDAD[a];
@@ -151,7 +155,7 @@ function arrancar(cv) {
       p = suave(p);
       const sem = P.semilla[i];
       const arco = quieto ? 0 : Math.sin(Math.PI * p);
-      const giro = quieto ? 0.35 : arco * 5;
+      const giro = arco * 5;
       const x = xa[i] + (xb[i] - xa[i]) * p + Math.sin(t * 2.1 + sem) * giro;
       const y = ya[i] + (yb[i] - ya[i]) * p + Math.cos(t * 1.7 + sem) * giro
               - arco * (14 + sem * 4);

@@ -25,3 +25,6 @@ desktop.ini
 .netlify/
 node_modules/
 work-npm-cache/
+
+# copia que genera el flujo de publicación
+public/logica-avisos.js

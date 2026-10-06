@@ -185,9 +185,10 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Responsables, copias, días no laborables y modo de envío.
+    // Responsables, copias, días no laborables y modo de envío. Todo el personal
+    // la lee para que el tablero calcule las fechas con los mismos días hábiles.
     match /config/avisos {
-      allow read: if esAdmin();
+      allow read: if delDominio();
       allow create, update: if esAdmin()
           && request.resource.data.keys().hasOnly([
                'modo', 'inicio', 'correoPrueba', 'correoErrores', 'responsables',

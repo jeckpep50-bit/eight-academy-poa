@@ -102,7 +102,7 @@ Super administradores actuales: `mibermeov@`, `dsroblesl@` y `lemaciasb@eightaca
 ## El tablero
 
 Secciones: 01 Panorama · 02 Semáforo · 03 Calendario · 04 Coincidencias ·
-05 Carga semanal · 06 Conflictos · 07 Matriz de riesgos · 08 Alertas 15 días ·
+05 Carga semanal · 06 Conflictos · 07 Matriz de riesgos · 08 Minuto a minuto ·
 09 Exportar (.ics para Google Calendar).
 
 **Semanas lectivas.** La semana 1 es la que contiene el 1 de septiembre (en
@@ -222,6 +222,7 @@ destacados; si ese día no salió nada, no hay resumen. Las listas se editan en
 | Pieza | Qué hace |
 |---|---|
 | `apps-script/Logica.js` | Días hábiles, fases y calendario comprimido. Probado en `tests/avisos-logica.test.mjs`. |
+| `public/logica-avisos.js` | No está en el repositorio: el flujo de publicación copia ahí `apps-script/Logica.js`, así el tablero calcula las mismas fechas que los correos. |
 | `apps-script/Avisos.js` | Decide qué sale cada día, redacta los correos y el resumen, y los envía. Simulación completa en `tests/avisos-envio.test.mjs`. |
 | Google Apps Script | Ejecuta `Avisos.js` con la cuenta de Marisol Bermeo: el correo sale de su buzón y no se guarda ninguna contraseña. |
 | `public/avisos.html` | Configuración para super administradores: modo, responsables, copias, días no laborables y registro de envíos. |

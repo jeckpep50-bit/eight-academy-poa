@@ -107,9 +107,11 @@ onAuthStateChanged(auth, async usuario => {
 /* ---------- traer los datos y arrancar el tablero ---------- */
 async function cargarTablero(usuario){
   const inicioLectura = performance.now();
-  const [partes, meta] = await Promise.all([
+  const [partes, meta, avisos] = await Promise.all([
     Promise.all(AREAS.map(a => getDoc(doc(db, "poa", a)))),
-    getDoc(doc(db, "meta", "general"))
+    getDoc(doc(db, "meta", "general")),
+    // sin el calendario de avisos el tablero funciona igual: solo descuenta fines de semana
+    getDoc(doc(db, "config", "avisos")).catch(error => { console.warn("Sin calendario de avisos", error); return null; })
   ]);
   console.info(`POA: lectura de Firestore en ${Math.round(performance.now() - inicioLectura)} ms`);
   const faltan = AREAS.filter((a,i) => !partes[i].exists());
@@ -130,7 +132,11 @@ async function cargarTablero(usuario){
 
   window.__DATOS__ = {
     generated: meta.exists() ? meta.data().generated : "",
-    events: eventos.filter(e => e.archivado !== true)
+    events: eventos.filter(e => e.archivado !== true),
+    avisos: {
+      inicio: avisos?.exists() ? avisos.data().inicio || "" : "",
+      noLaborables: avisos?.exists() ? (avisos.data().noLaborables || []).map(d => d.fecha) : []
+    }
   };
 
   const admin = esAdmin(usuario.email);
