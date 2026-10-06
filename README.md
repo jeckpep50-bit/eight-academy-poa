@@ -166,21 +166,68 @@ publica esa carpeta sin compilar.
 
 ## Qué falta
 
-- [ ] **Avisos automáticos por correo.** Lógica acordada, pendiente de que se
-      defina el responsable de cada área:
-  - Correo 1: 30 / 21 / 14 días hábiles antes (prioridad Alta / Media / Baja).
-  - Correo 2: 15 / 10 / 7 días hábiles antes.
-  - Correo 3: 3 días hábiles antes, para todas las prioridades.
-  - Correo 4: el día del evento, si nunca se entregó el minuto a minuto.
-  - Envío lunes a viernes a las 09:10 (hora de Ecuador) desde
-    `mibermeov@eightacademy.edu.ec`, al responsable del área con copia a los
-    super administradores. Sin enlaces a la plataforma.
+- [ ] **Avisos automáticos por correo** (lógica cerrada el 5 de octubre de
+      2026; ver abajo).
 - [ ] **Marcador "minuto a minuto entregado"** en el calendario, solo para
       super administradores: detiene los correos y muestra la actividad en
-      neón. Si se llega al correo 4 sin entrega, la actividad queda como marca
-      de agua.
+      neón. Si se llega al Seguimiento sin entrega, la actividad queda como
+      marca de agua. Al desmarcar no se reenvía lo ya enviado.
 - [ ] Definir qué puede editar exactamente cada super administrador.
 - [ ] Roles intermedios (directivo, docente por área).
+
+### Lógica de los avisos por correo
+
+**Qué actividades.** Solo las que tienen estrellas (la clasificación que ponen
+los super administradores). Una actividad sin estrellas no recibe correos.
+
+**Fases, en días hábiles antes de la actividad:**
+
+| Fase | ★★★ Grande | ★★ Mediana | ★ Pequeña |
+|---|---|---|---|
+| 1 · Anticipación | 50 | 30 | 15 |
+| 2 · Recordatorio | 30 | 18 | 10 |
+| 3 · Urgencia (llamado a la reflexión) | 15 | 10 | 5 |
+| 4 · Incumplimiento (memo / llamado de atención) | 5 | 3 | 2 |
+| 5 · Seguimiento | día de la actividad | día de la actividad | día de la actividad |
+
+Marcar "minuto a minuto entregado" detiene todas las fases siguientes.
+Seguimiento solo se envía si llegó el día y nunca se entregó.
+
+**Actividades que entran tarde** (agregadas al POA con menos días que su
+ventana, o que ya estaban dentro del plazo al arrancar el 5 de octubre de
+2026): calendario comprimido. Anticipación el siguiente día hábil;
+Recordatorio cuando quede el 60 % del tiempo; Urgencia al 30 %; Memo al 10 %.
+
+- Memo solo si al entrar le quedaban 10 días hábiles o más.
+- Al menos 2 días hábiles entre correos; si dos fases chocan se omite la más
+  suave (primero el Recordatorio).
+- Ningún correo se repite; si la fecha cambia, se recalcula lo que falta.
+
+**Días hábiles.** Lunes a viernes, descontando feriados, vacaciones de Navidad
+y cierres de trimestre (lista 2026–2027 por armar). Si la actividad cae en día
+no laborable, el Seguimiento sale el siguiente día hábil.
+
+**Envío.** 09:10, hora de Ecuador, desde `mibermeov@eightacademy.edu.ec`.
+Contenido: actividad, fecha límite, responsable, objetivo y descripción, sin
+enlace a la plataforma.
+
+**Para (responsables de área)**, todos `@eightacademy.edu.ec`:
+
+| Área | Responsables |
+|---|---|
+| Kids | `earaque@`, `mbfonsecam@` |
+| Primaria | `mscattana@`, `aearcos@` |
+| Secundaria | `mlara@`, `jgojeda@` |
+| DECE | `cachinachis@` |
+| Gestión de Riesgos | `arespinosam@` |
+| Marketing | `mjnoboab@` |
+| Zoobotánica | `mvera@` |
+
+**Resumen diario.** Estas personas no van en copia de cada correo: reciben un
+solo correo al día con la lista de todo lo enviado, con los memos destacados.
+Si ese día no salió ningún correo, no hay resumen.
+`lemaciasb@` (Dirección de Planificación), `inspecciongeneral@`, `rrhh@`,
+`secretaria@`, `rectorado@`, `slbustamantel@`, `dsroblesl@`.
 
 ---
 
