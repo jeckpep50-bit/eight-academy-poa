@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Avisos por correo · Eight Academy</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0e1223;color:#e8ecf8;font:16px/1.55 Arial,sans-serif;padding:24px}
+main{max-width:880px;margin:32px auto;background:#161c32;border:1px solid #2b3350;border-radius:16px;padding:28px}
+h1{font-size:25px;margin:0 0 8px}h2{font-size:18px;margin:30px 0 6px}p,.ayuda{color:#b3bcd6}a{color:#8db5ff}
+.ayuda{font-size:13.5px;margin:0 0 10px}
+label{display:block;font-weight:700;font-size:14px;margin:14px 0 5px}
+input,select,textarea{width:100%;background:#0e1223;color:#e8ecf8;border:1px solid #3a4468;border-radius:9px;padding:10px 12px;font:14px/1.5 "Consolas","Menlo",monospace}
+textarea{min-height:76px;resize:vertical}
+.fila{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 16px}
+button{border:0;border-radius:9px;padding:12px 18px;background:#f9d44f;color:#11162c;font-weight:700;cursor:pointer}
+button.sec{background:#2b3350;color:#e8ecf8}button:disabled{opacity:.5;cursor:not-allowed}
+.acciones{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:22px}
+.error{color:#f0907e}.ok{color:#7dc39a}.modo-prueba{color:#f9d44f}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{text-align:left;padding:7px 8px;border-top:1px solid #2b3350;vertical-align:top}
+th{color:#b3bcd6;font-weight:700}
+</style></head><body><main>
+<h1>Avisos por correo</h1>
+<p>Configuración de los avisos del minuto a minuto. Los envía cada día hábil a las 09:10 el script que corre con la cuenta de Marisol Bermeo.</p>
+<p id="estado" role="status">Comprobando acceso…</p>
+
+<form id="form" hidden>
+  <h2>Envío</h2>
+  <div class="fila">
+    <div><label for="modo">Modo</label>
+      <select id="modo">
+        <option value="prueba">Prueba · todo llega solo al correo de prueba</option>
+        <option value="activo">Activo · llega a los responsables</option>
+        <option value="pausado">En pausa · no se envía nada</option>
+      </select></div>
+    <div><label for="inicio">Fecha de inicio</label><input id="inicio" type="date" required></div>
+    <div><label for="correoPrueba">Correo de prueba</label><input id="correoPrueba" type="email"></div>
+    <div><label for="correoErrores">Avisar problemas a</label><input id="correoErrores" type="email"></div>
+  </div>
+
+  <h2>Responsables por área</h2>
+  <p class="ayuda">Una persona por línea: <code>Nombre | Cargo | correo</code>. Reciben cada correo de su área.</p>
+  <div id="areas"></div>
+
+  <h2>Copias · resumen diario</h2>
+  <p class="ayuda">Una persona por línea: <code>Nombre | Cargo | correo</code>. Reciben un solo resumen al día.</p>
+  <textarea id="copias" rows="8"></textarea>
+
+  <h2>Días no laborables</h2>
+  <p class="ayuda">Un día por línea: <code>AAAA-MM-DD | Motivo | Nota</code>. Los fines de semana ya se descuentan solos.</p>
+  <textarea id="noLaborables" rows="12"></textarea>
+
+  <div class="acciones">
+    <button type="submit" id="guardar">Guardar configuración</button>
+    <button type="button" class="sec" id="elegir">Cargar archivo inicial…</button>
+    <input id="archivo" type="file" accept=".json,application/json" hidden>
+    <span id="resultado" role="status"></span>
+  </div>
+</form>
+
+<h2>Últimos avisos enviados</h2>
+<table><thead><tr><th>Fecha</th><th>Fase</th><th>Área</th><th>Asunto</th><th>Para</th></tr></thead><tbody id="registro"></tbody></table>
+
+<p style="margin-top:26px"><a href="./index.html">Volver al tablero</a></p>
+</main>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, query, orderBy, limit }
+  from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { CONFIG, SUPERADMINS, AREAS, DOMINIO } from "./config.js";
+
+const app=initializeApp(CONFIG), auth=getAuth(app), db=getFirestore(app);
+const $=id=>document.getElementById(id);
+const NOMBRE_AREA={KIDS:"Kids",PRIMARIA:"Primaria",SECUNDARIA:"Secundaria",DECE:"DECE",MARKETING:"Marketing",RIESGOS:"Gestión de Riesgos",ZOOBOTANICA:"Zoobotánica"};
+const FASE={anticipacion:"Anticipación",recordatorio:"Recordatorio",urgencia:"Urgencia",memo:"Memorando",seguimiento:"Seguimiento"};
+const esAdmin=u=>u && u.emailVerified && SUPERADMINS.includes((u.email||"").toLowerCase());
+const correoValido=c=>new RegExp(`^[^@\\s|]+@${DOMINIO.replace(/\./g,"\\.")}$`,"i").test(c);
+
+$("areas").innerHTML=AREAS.map(a=>`<label for="r-${a}">${NOMBRE_AREA[a]}</label><textarea id="r-${a}" rows="2"></textarea>`).join("");
+
+const personasATexto=lista=>(lista||[]).map(p=>[p.nombre,p.cargo||"",p.correo].join(" | ")).join("\n");
+const diasATexto=lista=>(lista||[]).map(d=>[d.fecha,d.motivo||"",d.nota||""].join(" | ")).join("\n");
+
+function leerPersonas(texto,donde,errores){
+  return texto.split("\n").map(l=>l.trim()).filter(Boolean).map((linea,i)=>{
+    const [nombre,cargo,correo]=linea.split("|").map(s=>(s||"").trim());
+    if(!nombre||!correoValido(correo||"")) errores.push(`${donde}, línea ${i+1}: se espera «Nombre | Cargo | correo@${DOMINIO}».`);
+    return {nombre,cargo:cargo||"",correo:(correo||"").toLowerCase()};
+  });
+}
+function leerDias(texto,errores){
+  const vistos=new Set();
+  return texto.split("\n").map(l=>l.trim()).filter(Boolean).map((linea,i)=>{
+    const [fecha,motivo,nota]=linea.split("|").map(s=>(s||"").trim());
+    const valida=/^\d{4}-\d{2}-\d{2}$/.test(fecha||"") && !isNaN(new Date(fecha+"T12:00"));
+    if(!valida) errores.push(`Días no laborables, línea ${i+1}: la fecha debe ser AAAA-MM-DD.`);
+    if(vistos.has(fecha)) errores.push(`Días no laborables: la fecha ${fecha} está repetida.`);
+    vistos.add(fecha);
+    return {fecha,motivo:motivo||"",nota:nota||""};
+  }).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+}
+
+function pintar(cfg){
+  $("modo").value=cfg.modo||"prueba";
+  $("inicio").value=cfg.inicio||"";
+  $("correoPrueba").value=cfg.correoPrueba||"";
+  $("correoErrores").value=cfg.correoErrores||"";
+  AREAS.forEach(a=>{$(`r-${a}`).value=personasATexto((cfg.responsables||{})[a]);});
+  $("copias").value=personasATexto(cfg.copias);
+  $("noLaborables").value=diasATexto(cfg.noLaborables);
+  $("estado").className=cfg.modo==="prueba"?"modo-prueba":"";
+  $("estado").textContent=cfg.modo==="activo"?"Envío ACTIVO: los avisos llegan a los responsables."
+    :cfg.modo==="pausado"?"Envío EN PAUSA: no sale ningún correo."
+    :"Modo PRUEBA: todos los correos llegan solo al correo de prueba (máximo 5 al día).";
+}
+
+onAuthStateChanged(auth,async usuario=>{
+  if(!esAdmin(usuario)){ $("estado").textContent="Entra al tablero con una cuenta de super administrador para configurar los avisos."; return; }
+  try{
+    const snap=await getDoc(doc(db,"config","avisos"));
+    $("form").hidden=false;
+    if(snap.exists()) pintar(snap.data());
+    else { $("estado").textContent="Aún no hay configuración. Carga el archivo inicial o completa el formulario."; $("modo").value="prueba"; }
+    await pintarRegistro();
+  }catch(error){ $("estado").className="error"; $("estado").textContent="No se pudo leer la configuración: "+(error.code||error.message); }
+});
+
+async function pintarRegistro(){
+  const filas=await getDocs(query(collection(db,"registroAvisos"),orderBy("enviadoEl","desc"),limit(60)));
+  $("registro").replaceChildren(...(filas.empty
+    ? [Object.assign(document.createElement("tr"),{innerHTML:'<td colspan="5">Todavía no se ha enviado ningún aviso.</td>'})]
+    : filas.docs.map(d=>{
+        const r=d.data(), tr=document.createElement("tr");
+        [r.fecha,FASE[r.fase]||r.fase,NOMBRE_AREA[r.area]||r.area,r.asunto,(r.para||[]).join(", ")].forEach(t=>{
+          const td=document.createElement("td"); td.textContent=t||""; tr.appendChild(td);
+        });
+        return tr;
+      })));
+}
+
+$("elegir").addEventListener("click",()=>$("archivo").click());
+$("archivo").addEventListener("change",async ev=>{
+  const f=ev.target.files[0]; if(!f) return;
+  try{ pintar(JSON.parse(await f.text())); $("resultado").className=""; $("resultado").textContent="Archivo cargado en el formulario. Revísalo y pulsa Guardar."; }
+  catch(error){ $("resultado").className="error"; $("resultado").textContent="El archivo no es un JSON válido."; }
+  ev.target.value="";
+});
+
+$("form").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  if(!esAdmin(auth.currentUser)) return;
+  const errores=[];
+  const responsables={};
+  AREAS.forEach(a=>{ responsables[a]=leerPersonas($(`r-${a}`).value,NOMBRE_AREA[a],errores); });
+  const copias=leerPersonas($("copias").value,"Copias",errores);
+  const noLaborables=leerDias($("noLaborables").value,errores);
+  const correoPrueba=$("correoPrueba").value.trim().toLowerCase(), correoErrores=$("correoErrores").value.trim().toLowerCase();
+  if($("modo").value==="prueba" && !correoValido(correoPrueba)) errores.push("En modo prueba hace falta un correo de prueba institucional.");
+  if(correoErrores && !correoValido(correoErrores)) errores.push("El correo para avisar problemas debe ser institucional.");
+  if(!$("inicio").value) errores.push("Falta la fecha de inicio.");
+  if($("modo").value==="activo"){
+    const vacias=AREAS.filter(a=>!responsables[a].length).map(a=>NOMBRE_AREA[a]);
+    if(vacias.length) errores.push("Para activar el envío, todas las áreas necesitan responsables. Faltan: "+vacias.join(", ")+".");
+  }
+  if(errores.length){ $("resultado").className="error"; $("resultado").textContent=errores.join(" "); return; }
+  if($("modo").value==="activo" && !confirm("El envío quedará ACTIVO: desde el próximo día hábil a las 09:10 los avisos llegarán a los responsables reales. ¿Continuar?")) return;
+  $("guardar").disabled=true;
+  try{
+    await setDoc(doc(db,"config","avisos"),{
+      modo:$("modo").value, inicio:$("inicio").value, correoPrueba, correoErrores,
+      responsables, copias, noLaborables,
+      actualizadoPor:auth.currentUser.email, actualizadoEl:serverTimestamp()
+    });
+    pintar({modo:$("modo").value,inicio:$("inicio").value,correoPrueba,correoErrores,responsables,copias,noLaborables});
+    $("resultado").className="ok"; $("resultado").textContent="Configuración guardada.";
+  }catch(error){ $("resultado").className="error"; $("resultado").textContent="No se pudo guardar: "+(error.code||error.message); }
+  finally{ $("guardar").disabled=false; }
+});
+</script></body></html>

@@ -5,7 +5,7 @@ import {
 // El estado compartido se recibe siempre de Firestore. No se conserva una copia
 // editable en localStorage, para que todos los administradores vean lo mismo.
 export function iniciarGestion(db, usuario, esSuperadmin) {
-  const estado = { revisiones: {}, clasificaciones: {}, error: null };
+  const estado = { revisiones: {}, clasificaciones: {}, entregas: {}, avisos: {}, error: null };
   const suscriptores = new Set();
   const avisar = () => suscriptores.forEach(fn => fn(estado));
 
@@ -28,6 +28,21 @@ export function iniciarGestion(db, usuario, esSuperadmin) {
     avisar();
   }, error => { estado.error = error; avisar(); });
 
+  // Un fallo aquí (p. ej. reglas aún sin publicar) no debe detener el tablero.
+  onSnapshot(collection(db, "entregas"), snapshot => {
+    const entregas = {};
+    snapshot.forEach(item => { if (item.data().entregado === true) entregas[item.id] = true; });
+    estado.entregas = entregas;
+    avisar();
+  }, error => console.warn("No se pudieron leer las entregas", error));
+
+  onSnapshot(collection(db, "avisos"), snapshot => {
+    const avisos = {};
+    snapshot.forEach(item => { avisos[item.id] = item.data(); });
+    estado.avisos = avisos;
+    avisar();
+  }, error => console.warn("No se pudo leer el estado de los avisos", error));
+
   function exigirPermiso() {
     if (!esSuperadmin) throw new Error("Solo un super administrador puede modificar el estado.");
   }
@@ -49,6 +64,15 @@ export function iniciarGestion(db, usuario, esSuperadmin) {
       }
       await setDoc(doc(db, "clasificaciones", String(id)), {
         clase, actualizadoPor: usuario.email, actualizadoEl: serverTimestamp()
+      });
+    },
+    async guardarEntrega(id, entregado) {
+      exigirPermiso();
+      if (!/^[0-9]{1,10}$/.test(String(id)) || typeof entregado !== "boolean") {
+        throw new Error("Entrega inválida.");
+      }
+      await setDoc(doc(db, "entregas", String(id)), {
+        entregado, actualizadoPor: usuario.email, actualizadoEl: serverTimestamp()
       });
     },
     async restablecerRevisiones() {

@@ -158,6 +158,57 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Casilla "minuto a minuto entregado": detiene los avisos por correo.
+    match /entregas/{actividad} {
+      allow read: if delDominio();
+      allow create, update: if esAdmin()
+          && actividad.matches('^[0-9]{1,10}$')
+          && request.resource.data.keys().hasOnly([
+               'entregado', 'actualizadoPor', 'actualizadoEl'
+             ])
+          && request.resource.data.keys().hasAll([
+               'entregado', 'actualizadoPor', 'actualizadoEl'
+             ])
+          && cambioValido()
+          && request.resource.data.entregado is bool;
+      allow delete: if false;
+    }
+
+    // Estado y registro de los avisos. Solo los escribe el script de envío,
+    // que entra con permiso de IAM y no pasa por estas reglas.
+    match /avisos/{actividad} {
+      allow read: if delDominio();
+      allow write: if false;
+    }
+    match /registroAvisos/{envio} {
+      allow read: if esAdmin();
+      allow write: if false;
+    }
+
+    // Responsables, copias, días no laborables y modo de envío.
+    match /config/avisos {
+      allow read: if esAdmin();
+      allow create, update: if esAdmin()
+          && request.resource.data.keys().hasOnly([
+               'modo', 'inicio', 'correoPrueba', 'correoErrores', 'responsables',
+               'copias', 'noLaborables', 'actualizadoPor', 'actualizadoEl'
+             ])
+          && request.resource.data.keys().hasAll([
+               'modo', 'inicio', 'responsables', 'copias', 'noLaborables',
+               'actualizadoPor', 'actualizadoEl'
+             ])
+          && cambioValido()
+          && request.resource.data.modo in ['prueba', 'activo', 'pausado']
+          && request.resource.data.inicio is string
+          && request.resource.data.inicio.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && request.resource.data.responsables is map
+          && request.resource.data.copias is list
+          && request.resource.data.copias.size() <= 30
+          && request.resource.data.noLaborables is list
+          && request.resource.data.noLaborables.size() <= 150;
+      allow delete: if false;
+    }
+
     // Todo lo que no esté declarado arriba queda cerrado.
     match /{documento=**} {
       allow read, write: if false;

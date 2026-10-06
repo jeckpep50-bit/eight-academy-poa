@@ -166,12 +166,8 @@ publica esa carpeta sin compilar.
 
 ## Qué falta
 
-- [ ] **Avisos automáticos por correo** (lógica cerrada el 5 de octubre de
-      2026; ver abajo).
-- [ ] **Marcador "minuto a minuto entregado"** en el calendario, solo para
-      super administradores: detiene los correos y muestra la actividad en
-      neón. Si se llega al Seguimiento sin entrega, la actividad queda como
-      marca de agua. Al desmarcar no se reenvía lo ya enviado.
+- [ ] **Avisos automáticos por correo:** construidos; falta la puesta en marcha (ver abajo).
+- [x] Casilla "minuto a minuto entregado" en el calendario (neón / marca de agua).
 - [ ] Definir qué puede editar exactamente cada super administrador.
 - [ ] Roles intermedios (directivo, docente por área).
 
@@ -203,31 +199,60 @@ Recordatorio cuando quede el 60 % del tiempo; Urgencia al 30 %; Memo al 10 %.
   suave (primero el Recordatorio).
 - Ningún correo se repite; si la fecha cambia, se recalcula lo que falta.
 
-**Días hábiles.** Lunes a viernes, descontando feriados, vacaciones de Navidad
-y cierres de trimestre (lista 2026–2027 por armar). Si la actividad cae en día
-no laborable, el Seguimiento sale el siguiente día hábil.
+**Días hábiles.** Lunes a viernes, descontando feriados oficiales (incluido el
+descanso del 20 de noviembre de 2026, Decreto 507) y las vacaciones de
+Navidad. Las vacaciones solo de estudiantes (Carnaval y Semana Santa) se
+cuentan, porque el personal trabaja. Si la actividad cae en día no laborable,
+el Seguimiento sale el siguiente día hábil.
 
-**Envío.** 09:10, hora de Ecuador, desde `mibermeov@eightacademy.edu.ec`.
-Contenido: actividad, fecha límite, responsable, objetivo y descripción, sin
-enlace a la plataforma.
+**Envío.** 09:10, hora de Ecuador, desde `mibermeov@eightacademy.edu.ec`, firmado
+por Marisol Bermeo, Departamento de Planificación. Contenido: actividad, fecha
+límite, responsable, objetivo y descripción, sin enlace a la plataforma. El
+minuto a minuto se entrega a `planificacion@` con copia a `mibermeov@`.
+Fecha límite: el día hábil anterior al memo (o a la actividad, si no hay memo).
 
-**Para (responsables de área)**, todos `@eightacademy.edu.ec`:
+**Destinatarios.** Los responsables de cada área reciben cada correo. Las
+personas en copia (Dirección de Planificación, Inspección, Talento Humano,
+Secretaría, Rectorado y otras) reciben un solo **resumen diario**, con los memos
+destacados; si ese día no salió nada, no hay resumen. Las listas se editan en
+`avisos.html` y se guardan en Firestore (`config/avisos`), no en el repositorio.
 
-| Área | Responsables |
+### Cómo está construido el envío
+
+| Pieza | Qué hace |
 |---|---|
-| Kids | `earaque@`, `mbfonsecam@` |
-| Primaria | `mscattana@`, `aearcos@` |
-| Secundaria | `mlara@`, `jgojeda@` |
-| DECE | `cachinachis@` |
-| Gestión de Riesgos | `arespinosam@` |
-| Marketing | `mjnoboab@` |
-| Zoobotánica | `mvera@` |
+| `apps-script/Logica.js` | Días hábiles, fases y calendario comprimido. Probado en `tests/avisos-logica.test.mjs`. |
+| `apps-script/Avisos.js` | Decide qué sale cada día, redacta los correos y el resumen, y los envía. Simulación completa en `tests/avisos-envio.test.mjs`. |
+| Google Apps Script | Ejecuta `Avisos.js` con la cuenta de Marisol Bermeo: el correo sale de su buzón y no se guarda ninguna contraseña. |
+| `public/avisos.html` | Configuración para super administradores: modo, responsables, copias, días no laborables y registro de envíos. |
+| Casilla en el detalle de cada actividad | "Minuto a minuto entregado" (solo super administradores). Entregada = neón; incumplida = marca de agua. |
 
-**Resumen diario.** Estas personas no van en copia de cada correo: reciben un
-solo correo al día con la lista de todo lo enviado, con los memos destacados.
-Si ese día no salió ningún correo, no hay resumen.
-`lemaciasb@` (Dirección de Planificación), `inspecciongeneral@`, `rrhh@`,
-`secretaria@`, `rectorado@`, `slbustamantel@`, `dsroblesl@`.
+Colecciones nuevas en Firestore: `entregas` (la casilla), `avisos` (fases
+enviadas y estado de cada actividad), `registroAvisos` (cada correo enviado) y
+`config/avisos`. Las dos intermedias solo las escribe el script.
+
+**Modos.** *Prueba*: todo llega solo al correo de prueba (máximo 5 al día) y no
+se guarda nada. *Activo*: llega a los responsables. *En pausa*: no sale nada.
+
+### Puesta en marcha del envío (una sola vez)
+
+1. **Permiso sobre Firestore para la cuenta que envía.** En
+   [IAM del proyecto](https://console.cloud.google.com/iam-admin/iam?project=eight-academy-poa):
+   *Otorgar acceso* → `mibermeov@eightacademy.edu.ec` → rol **Usuario de Cloud Datastore**.
+2. **Subir el script.** Desde esta carpeta, con [clasp](https://github.com/google/clasp):
+   `npx @google/clasp login`, luego `npx @google/clasp create --type standalone --title "Avisos POA" --rootDir apps-script`
+   y `npx @google/clasp push`. Compartir el proyecto con `mibermeov@` como editora.
+3. **Instalar.** Con la cuenta de Marisol Bermeo, abrir el proyecto, elegir la
+   función `instalar` y pulsar *Ejecutar*. Aceptar los permisos (enviar correo,
+   conectarse a Firestore, programar la hora de envío).
+4. **Configurar.** En `avisos.html`, *Cargar archivo inicial* con
+   `datos/avisos-config.json` (no está en el repositorio) y *Guardar* en modo Prueba.
+5. **Probar.** La función `simularHoy` muestra en el registro lo que saldría
+   hoy, sin enviar. En modo Prueba, a las 09:10 llegan hasta 5 correos al correo
+   de prueba. Cuando todo esté bien, cambiar a **Activo**.
+
+Si se cambia el código de `apps-script/`, basta `npx @google/clasp push`; si se
+añaden permisos nuevos, Marisol debe volver a ejecutar `instalar`.
 
 ---
 

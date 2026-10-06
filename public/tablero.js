@@ -77,6 +77,43 @@ function refreshClassUI(){
   document.getElementById('dClassStars').textContent = c?CLASS_META[c].stars:'';
   document.getElementById('dClassLabel').textContent = c?CLASS_META[c].label:'Clasificación';
 }
+/* minuto a minuto: la casilla detiene los avisos por correo */
+const getEntregas=()=>GESTION.estado.entregas||{};
+const getAvisos=()=>GESTION.estado.avisos||{};
+const FASES_AVISO=[['anticipacion','Anticipación'],['recordatorio','Recordatorio'],['urgencia','Urgencia'],['memo','Memorando'],['seguimiento','Seguimiento']];
+function estadoEntrega(id){
+  const a=getAvisos()[id];
+  if(a&&a.estado==='incumplida') return 'incumplida';
+  return getEntregas()[id] ? 'entregada' : '';
+}
+function textoEntrega(id){
+  const est=estadoEntrega(id), clase=getClassMap()[id];
+  if(est==='incumplida') return `<b>No entregado</b> · actividad registrada como incumplida${getEntregas()[id]?' (se marcó como entregado después del seguimiento)':''}`;
+  if(est==='entregada') return '<b>Entregado</b> · los avisos por correo están detenidos';
+  if(!clase||!CLASS_META[clase]) return 'Sin avisos por correo: la actividad no tiene clasificación';
+  return 'Pendiente';
+}
+function textoAvisos(id){
+  const a=getAvisos()[id];
+  if(!a||!a.fases) return '';
+  const filas=FASES_AVISO.filter(([f])=>a.fases[f]).map(([f,n])=>
+    a.fases[f]==='omitida' ? `${n}: <i>omitida</i>` : `${n}: ${fmt(a.fases[f])}${f==='memo'&&a.memo?` · ${esc(a.memo)}`:''}`);
+  return filas.join('<br>');
+}
+function refreshEntregaUI(){
+  const btn=document.getElementById('dEntregaBtn');
+  if(currentClassEventId==null||!IS_SUPERADMIN){ btn.classList.add('hidden'); return; }
+  const marcado=!!getEntregas()[currentClassEventId];
+  btn.classList.remove('hidden');
+  btn.setAttribute('aria-pressed', marcado?'true':'false');
+  document.getElementById('dEntregaLabel').textContent = marcado?'Minuto a minuto entregado':'Minuto a minuto';
+}
+async function toggleEntrega(){
+  if(!IS_SUPERADMIN||currentClassEventId==null) return;
+  const id=currentClassEventId;
+  try { await GESTION.guardarEntrega(id, !getEntregas()[id]); }
+  catch(error){ alert('No se pudo guardar la entrega: '+(error.code||error.message)); }
+}
 async function setClass(c){
   if(!IS_SUPERADMIN) return;
   if(currentClassEventId==null) return;
@@ -96,6 +133,7 @@ function openDetail(title, rows){
   /* por defecto, sin clasificación visible; showEv la reactiva cuando aplica */
   currentClassEventId=null;
   document.getElementById('dClassBtn').classList.add('hidden');
+  document.getElementById('dEntregaBtn').classList.add('hidden');
   document.getElementById('classPanel').classList.add('hidden');
 }
 function evRows(e){
@@ -115,6 +153,8 @@ function evRows(e){
     ['Estado', esc(e.estado||'')],
     ['Observaciones', esc(e.notas||'')],
     ['Planificación pormenorizada', e.planning==='SÍ' ? `Requerida · enviar antes del ${fmt(e.reminder)} a ${MAIL}` : 'Por validar'],
+    ['Minuto a minuto', e.start ? textoEntrega(e.id) : ''],
+    ['Avisos enviados', IS_SUPERADMIN ? textoAvisos(e.id) : ''],
     ['Texto original en el POA', `<span class="trace">${esc(e.original||'')}</span>`],
     ['Fuente', `<span class="trace">${esc(e.sourceFile)} · hoja «${esc(e.sourceSheet)}» · fila ${esc(e.sourceRow)}</span>`],
   ];
@@ -474,12 +514,22 @@ function evHTML(e,mini){
   const inf = (e.dateStatus==='INFERIDA'||e.dateStatus==='MES POR DEFINIR')?' inferida':'';
   const lbl = `${meta(e.area).label}: ${e.activity}, ${fmt(e.start)}`;
   const cId=getClassMap()[e.id];
-  const lblc = cId&&CLASS_META[cId] ? `, ${CLASS_META[cId].label}` : '';
-  return `<div class="${cls}${inf} ${meta(e.area).cls}" ${activable(`showEv(${e.id})`)} `+
+  const ent=estadoEntrega(e.id);
+  const lblc = (cId&&CLASS_META[cId] ? `, ${CLASS_META[cId].label}` : '') +
+    (ent==='entregada' ? ', minuto a minuto entregado' : ent==='incumplida' ? ', incumplida: no se entregó el minuto a minuto' : '');
+  return `<div class="${cls}${inf} ${meta(e.area).cls}${ent?' '+ent:''}" ${activable(`showEv(${e.id})`)} `+
     `aria-label="${esc(lbl+lblc)}" title="${esc(lbl+lblc)}">` +
     `<b class="evtk" aria-hidden="true">${meta(e.area).mono}</b>${e.destacado?'★ ':''}${esc(e.activity)}${classBadge(e.id)}</div>`;
 }
-window.showEv = id => { const e=D.events.find(x=>x.id===id); if(e){ openDetail(e.activity, evRows(e)); currentClassEventId=id; document.getElementById('dClassBtn').classList.remove('hidden'); refreshClassUI(); } };
+window.showEv = id => { const e=D.events.find(x=>x.id===id); if(e){ openDetail(e.activity, evRows(e)); currentClassEventId=id; document.getElementById('dClassBtn').classList.remove('hidden'); refreshClassUI(); refreshEntregaUI(); } };
+/* al cambiar el estado compartido, el detalle abierto se actualiza sin perder el scroll */
+function refreshDetalleAbierto(){
+  if(currentClassEventId==null||!document.getElementById('detail').open) return;
+  const e=D.events.find(x=>x.id===currentClassEventId);
+  if(!e) return;
+  document.getElementById('dBody').innerHTML = evRows(e).filter(r=>r[1]).map(r=>`<dt>${esc(r[0])}</dt><dd>${r[1]}</dd>`).join('');
+  refreshClassUI(); refreshEntregaUI();
+}
 function monthGrid(evs,y,m,mini){
   const first=new Date(y,m-1,1), dim=new Date(y,m,0).getDate(), lead=(first.getDay()+6)%7;
   const today=toISO(new Date());
@@ -1070,7 +1120,7 @@ function init(){
         return;
       }
       renderRisks(); renderAvance(); renderCal();
-      if(currentClassEventId!==null) refreshClassUI();
+      refreshDetalleAbierto();
     });
     console.info(`POA: cálculo y presentación en ${Math.round(performance.now() - inicioRender)} ms`);
   }catch(err){

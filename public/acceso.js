@@ -169,6 +169,11 @@ function identidad(usuario, admin){
     editar.textContent="Editar e importar POA";
     editar.style.cssText="color:#f5d04e;font-weight:700;padding:7px 9px";
     barra.insertBefore(editar,salir);
+    const avisos=document.createElement("a");
+    avisos.href="./avisos.html";
+    avisos.textContent="Avisos por correo";
+    avisos.style.cssText=editar.style.cssText;
+    barra.insertBefore(avisos,salir);
   }
 
   const destino = document.querySelector(".role-bar") || document.querySelector("header.top");
@@ -179,7 +184,7 @@ function identidad(usuario, admin){
   // administrador no ve los controles que escriben.
   if(!admin){
     const css = document.createElement("style");
-    css.textContent = `[data-acceso="lectura"] .admin-only,#rReset,.finding .actions button,#dClassBtn{display:none!important}`;
+    css.textContent = `[data-acceso="lectura"] .admin-only,#rReset,.finding .actions button,#dClassBtn,#dEntregaBtn{display:none!important}`;
     document.head.appendChild(css);
   }
 }

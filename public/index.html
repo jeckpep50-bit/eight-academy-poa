@@ -249,6 +249,25 @@ section > .sub{margin:0 0 14px;color:var(--ink-2);font-size:14.5px;max-width:86c
 .class-badge.cb-mediana{color:var(--class-mediana)}
 .class-badge.cb-pequena{color:var(--class-pequena)}
 
+/* ---------------- MINUTO A MINUTO: neón si se entregó, marca de agua si no ---------------- */
+.ev.entregada,.mev.entregada{background:var(--c);color:var(--ci);border-left-color:var(--ci);
+  box-shadow:0 0 0 1.5px var(--c),0 0 10px 1px var(--c),0 0 22px 3px color-mix(in srgb,var(--c) 70%,transparent);
+  filter:saturate(1.35) brightness(1.08)}
+.ev.entregada .evtk,.mev.entregada .evtk{background:var(--ci);color:var(--c)}
+.ev.incumplida,.mev.incumplida{opacity:.55;border-left-style:dashed;color:var(--ink-2);
+  background:repeating-linear-gradient(-45deg,var(--cs) 0 7px,transparent 7px 14px);
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--c) 55%,transparent);filter:grayscale(.35)}
+.ev.incumplida::after{content:"INCUMPLIDA";display:block;margin-top:3px;font:800 9px/1 "IBM Plex Mono";
+  letter-spacing:.12em;color:var(--c)}
+.entrega-tab{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:99px;
+  font:700 11.5px "Source Sans 3";background:var(--surface-2);border:1.5px solid var(--line-2);
+  color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.entrega-tab:hover{border-color:var(--ink-3)}
+.entrega-tab .caja{width:14px;height:14px;border-radius:4px;border:2px solid currentColor;display:inline-grid;
+  place-items:center;font-size:10px;line-height:1}
+.entrega-tab[aria-pressed="true"]{color:var(--good);border-color:currentColor;background:var(--good-soft)}
+.entrega-tab[aria-pressed="true"] .caja::before{content:"✓";font-weight:900}
+
 /* ---------------- cifras ---------------- */
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:13px}
 .tile{border:1px solid var(--line);border-radius:12px;padding:17px 18px;background:var(--surface-2);
@@ -896,6 +915,7 @@ dialog .db{max-height:min(62vh,560px);overflow:auto}
     <div class="dh-title-group">
       <strong id="dTitle">Detalle</strong>
       <button id="dClassBtn" class="class-tab hidden" type="button" aria-expanded="false" aria-controls="classPanel" onclick="toggleClassPanel()"><span id="dClassStars" class="stars" aria-hidden="true"></span><span id="dClassLabel">Clasificación</span></button>
+      <button id="dEntregaBtn" class="entrega-tab hidden" type="button" aria-pressed="false" onclick="toggleEntrega()"><span class="caja" aria-hidden="true"></span><span id="dEntregaLabel">Minuto a minuto</span></button>
     </div>
     <button class="close" type="button" aria-label="Cerrar detalle" onclick="document.getElementById('detail').close()">✕</button>
   </div>
